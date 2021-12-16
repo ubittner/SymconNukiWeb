@@ -1,0 +1,12 @@
+{
+  "id": "{8CDE2F20-ECBF-F12E-45AC-B8A7F36CBBFC}",
+  "author": "Ulrich Bittner",
+  "name": "Nuki Web",
+  "url": "https://nuki.io/de/",
+  "compatibility": {
+    "version": "5.5"
+  },
+  "version": "1.0",
+  "build": 1,
+  "date": 1639583250
+}

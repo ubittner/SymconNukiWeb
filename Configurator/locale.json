@@ -1,0 +1,16 @@
+{
+  "translations": {
+    "de": {
+      "Currently only the Nuki Opener is supported!": "Derzeit wird nur der Nuki Opener unterstützt!",
+      "Configurator Web API": "Konfigurator Web API",
+      "This instance can determine existing Nuki devices.": "Diese Instanz kann bestehende Nuki Geräte ermitteln.",
+      "Please select a category for the Nuki devices": "Bitte wählen Sie eine Kategorie für die Nuki Geräte aus",
+      "Category": "Kategorie",
+      "Devices": "Geräte",
+      "Device Type": "Gerätetyp",
+      "Product Designation": "Produktbezeichnung",
+      "Unknown": "Unbekannt",
+      "not found!": "nicht gefunden!"
+    }
+  }
+}
