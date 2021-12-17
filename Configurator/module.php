@@ -124,7 +124,7 @@ class NukiConfiguratorWebAPI extends IPSModule
                                 /*
                                 'create' => [
                                     'moduleID' => "{48C163A9-C871-88EB-2717-26A195E3E476}",
-                                    'name' => $name . ' (Nuki Smart Lock Web API)',
+                                    'name' => $name,
                                     'configuration' => [
                                         'SmartLockID'  => (string) $smartLockID,
                                         'AccountID' => (string) $accountID,
@@ -151,7 +151,7 @@ class NukiConfiguratorWebAPI extends IPSModule
                                 /*
                                 'create' => [
                                     'moduleID' => "{5C79FC64-46D3-1EF9-3C72-3137275CB34C}",
-                                    'name' => $name . ' (Nuki Box Web API)',
+                                    'name' => $name,
                                     'configuration' => [
                                         'SmartLockID'  => (string) $smartLockID,
                                         'AccountID' => (string) $accountID,
@@ -177,7 +177,7 @@ class NukiConfiguratorWebAPI extends IPSModule
                                 'instanceID'         => $instanceID,
                                 'create'             => [
                                     'moduleID'      => '{41271F9F-1DB0-CB78-93BD-1361A6C5C058}',
-                                    'name'          => $name . ' (Nuki Opener Web API)',
+                                    'name'          => $name,
                                     'configuration' => [
                                         'SmartLockID'  => (string) $smartLockID,
                                         'AccountID'    => (string) $accountID,
@@ -203,7 +203,7 @@ class NukiConfiguratorWebAPI extends IPSModule
                                 /*
                                 'create' => [
                                     'moduleID' => "{8A30A6FD-A027-95E0-2DB2-F4B4F50E4EEA}",
-                                    'name' => $name . ' (Nuki Door Web API)',
+                                    'name' => $name,
                                     'configuration' => [
                                         'SmartLockID'  => (string) $smartLockID,
                                         'AccountID' => (string) $accountID,

@@ -46,141 +46,10 @@
       "caption": "Name"
     },
     {
-      "type": "Label",
-      "caption": " "
-    },
-    {
-      "type": "ExpansionPanel",
-      "caption": "Sound",
-      "items": [
-        {
-          "type": "Label",
-          "caption": "Ring suppression"
-        },
-        {
-          "type": "Label",
-          "caption": "Select the actions for which the opener should suppress the intercom ring signal if possible."
-        },
-        {
-          "type": "CheckBox",
-          "name": "RingSuppressionRing",
-          "caption": "Ring"
-        },
-        {
-          "type": "CheckBox",
-          "name": "RingSuppressionRingToOpen",
-          "caption": "Ring to Open"
-        },
-        {
-          "type": "CheckBox",
-          "name": "RingSuppressionContinuousMode",
-          "caption": "Continuous mode"
-        },
-        {
-          "type": "Label",
-          "caption": " "
-        },
-        {
-          "type": "Label",
-          "caption": "Opener Sounds"
-        },
-        {
-          "type": "Label",
-          "caption": "Choose a sound that the opener should make during the respective action."
-        },
-        {
-          "type": "Select",
-          "name": "SoundDoorbellRings",
-          "caption": "Doorbell rings",
-          "options": [
-            {
-              "caption": "No sound (default)",
-              "value": 0
-            },
-            {
-              "caption": "Sound 1",
-              "value": 1
-            },
-            {
-              "caption": "Sound 2",
-              "value": 2
-            },
-            {
-              "caption": "Sound 3",
-              "value": 3
-            }
-          ]
-        },
-        {
-          "type": "Select",
-          "name": "SoundOpenViaApp",
-          "caption": "Open via app",
-          "options": [
-            {
-              "caption": "No sound (default)",
-              "value": 0
-            },
-            {
-              "caption": "Sound 1",
-              "value": 1
-            },
-            {
-              "caption": "Sound 2",
-              "value": 2
-            },
-            {
-              "caption": "Sound 3",
-              "value": 3
-            }
-          ]
-        },
-        {
-          "type": "Select",
-          "name": "SoundRingToOpen",
-          "caption": "Ring to Open",
-          "options": [
-            {
-              "caption": "No sound (default)",
-              "value": 0
-            },
-            {
-              "caption": "Sound 1",
-              "value": 1
-            },
-            {
-              "caption": "Sound 2",
-              "value": 2
-            },
-            {
-              "caption": "Sound 3",
-              "value": 3
-            }
-          ]
-        },
-        {
-          "type": "Select",
-          "name": "SoundContinuousMode",
-          "caption": "Continuous mode",
-          "options": [
-            {
-              "caption": "No sound (default)",
-              "value": 0
-            },
-            {
-              "caption": "Sound 1",
-              "value": 1
-            },
-            {
-              "caption": "Sound 2",
-              "value": 2
-            },
-            {
-              "caption": "Sound 3",
-              "value": 3
-            }
-          ]
-        }
-      ]
+      "type": "NumberSpinner",
+      "name": "UpdateInterval",
+      "caption": "Update interval",
+      "suffix": "seconds"
     }
   ],
   "actions": [
@@ -191,7 +60,7 @@
         {
           "type": "Button",
           "caption": "Show configuration",
-          "onClick": "$config=NUKIOW_GetOpenerConfiguration($id); print_r(json_decode($config, true));"
+          "onClick": "$config=NUKIOW_GetOpenerConfiguration($id, true); print_r(json_decode($config, true));"
         }
       ]
     }
