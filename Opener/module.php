@@ -27,6 +27,50 @@ class NukiOpenerWebAPI extends IPSModule
 
         ##### Variables
 
+        //Door
+        $profile = self::MODULE_PREFIX . '.' . $this->InstanceID . '.Door';
+        if (!IPS_VariableProfileExists($profile)) {
+            IPS_CreateVariableProfile($profile, 1);
+        }
+        IPS_SetVariableProfileIcon($profile, 'Door');
+        IPS_SetVariableProfileAssociation($profile, 0, $this->Translate('Open'), '', 0x00FF00);
+        $this->RegisterVariableInteger('Door', $this->Translate('Door'), $profile, 10);
+        $this->EnableAction('Door');
+
+        //Label state
+        $this->RegisterVariableString('LabelState', $this->Translate('State'), '', 100);
+
+        //Device state
+        $profile = self::MODULE_PREFIX . '.' . $this->InstanceID . '.DeviceState';
+        if (!IPS_VariableProfileExists($profile)) {
+            IPS_CreateVariableProfile($profile, 1);
+        }
+        IPS_SetVariableProfileIcon($profile, '');
+        IPS_SetVariableProfileAssociation($profile, 0, $this->Translate('Untrained'), 'Execute', 0xFF0000);
+        IPS_SetVariableProfileAssociation($profile, 1, $this->Translate('Online'), 'Network', 0x00FF00);
+        IPS_SetVariableProfileAssociation($profile, 3, $this->Translate('Ring to Open active'), 'Alert', 0xFFFF00);
+        IPS_SetVariableProfileAssociation($profile, 5, $this->Translate('Open'), 'Door', 0x00FF00);
+        IPS_SetVariableProfileAssociation($profile, 7, $this->Translate('Opening'), 'Door', 0x00FF00);
+        IPS_SetVariableProfileAssociation($profile, 253, 'Boot Run', 'Repeat', 0x0000FF);
+        IPS_SetVariableProfileAssociation($profile, 255, $this->Translate('Undefined'), 'Warning', 0xFF0000);
+        IPS_SetVariableProfileAssociation($profile, 256, $this->Translate('Unknown'), 'Information', -1);
+        $id = @$this->GetIDForIdent('DeviceState');
+        $this->RegisterVariableInteger('DeviceState', $this->Translate('Device state'), $profile, 110);
+        if ($id == false) {
+            $this->SetValue('DeviceState', 256);
+        }
+
+        //Battery state
+        $profile = self::MODULE_PREFIX . '.' . $this->InstanceID . '.BatteryState';
+        if (!IPS_VariableProfileExists($profile)) {
+            IPS_CreateVariableProfile($profile, 1);
+        }
+        IPS_SetVariableProfileIcon($profile, 'Battery');
+        IPS_SetVariableProfileAssociation($profile, 0, 'OK', '', 0x00FF00);
+        IPS_SetVariableProfileAssociation($profile, 1, $this->Translate('Low battery'), '', 0xFF0000);
+        IPS_SetVariableProfileAssociation($profile, 2, $this->Translate('Unknown'), '', -1);
+        $this->RegisterVariableInteger('BatteryState', $this->Translate('Battery state'), $profile, 120);
+
         //Label ring suppression
         $this->RegisterVariableString('LabelRingSuppression', $this->Translate('Ring suppression'), '', 300);
 
@@ -122,7 +166,7 @@ class NukiOpenerWebAPI extends IPSModule
 
         ##### Timer
 
-        $this->RegisterTimer('Update', 0, self::MODULE_PREFIX . '_GetOpenerConfiguration(' . $this->InstanceID . ', true);');
+        $this->RegisterTimer('Update', 0, self::MODULE_PREFIX . '_GetOpenerData(' . $this->InstanceID . ', true);');
 
         ##### Splitter
 
@@ -136,7 +180,7 @@ class NukiOpenerWebAPI extends IPSModule
         parent::Destroy();
 
         //Delete profiles
-        $profiles = ['SoundDoorbellRings', 'SoundOpenViaApp', 'SoundRingToOpen', 'SoundContinuousMode', 'Volume'];
+        $profiles = ['Door', 'DeviceState', 'BatteryState', 'SoundDoorbellRings', 'SoundOpenViaApp', 'SoundRingToOpen', 'SoundContinuousMode', 'Volume'];
         foreach ($profiles as $profile) {
             $profileName = self::MODULE_PREFIX . '.' . $this->InstanceID . '.' . $profile;
             if (@IPS_VariableProfileExists($profileName)) {
@@ -158,7 +202,7 @@ class NukiOpenerWebAPI extends IPSModule
             return;
         }
 
-        $this->GetOpenerConfiguration(true);
+        $this->GetOpenerData(true);
         $this->SetTimerInterval('Update', $this->ReadPropertyInteger('UpdateInterval') * 1000);
     }
 
@@ -181,6 +225,7 @@ class NukiOpenerWebAPI extends IPSModule
     public function GetConfigurationForm()
     {
         $formData = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
+        //Version info
         $library = IPS_GetLibrary(self::LIBRARY_GUID);
         $version = 'Version: ' . $library['Version'] . '-' . $library['Build'] . ' vom ' . date('d.m.Y', $library['Date']);
         $formData['elements'][2]['caption'] = $version;
@@ -194,12 +239,17 @@ class NukiOpenerWebAPI extends IPSModule
         $this->SendDebug(__FUNCTION__, utf8_decode($data->Buffer), 0);
     }
 
-    public function GetOpenerConfiguration(bool $Update): string
+    #################### Public methods
+
+    public function GetOpenerData(bool $Update): string
     {
-        $openerConfig = '';
+        $openerData = '';
         $smartLockID = $this->ReadPropertyString('SmartLockID');
         if (empty($smartLockID)) {
-            return $openerConfig;
+            return $openerData;
+        }
+        if (!$this->HasActiveParent()) {
+            return $openerData;
         }
         $data = [];
         $buffer = [];
@@ -212,17 +262,29 @@ class NukiOpenerWebAPI extends IPSModule
         foreach ($devices as $device) {
             if (array_key_exists('smartlockId', $device)) {
                 if ($device['smartlockId'] == $smartLockID) {
-                    $openerConfig = $device;
+                    $openerData = $device;
                 }
             }
         }
-        $this->SendDebug(__FUNCTION__, 'Actual config: ' . json_encode($openerConfig), 0);
-        //Update values
+        $this->SendDebug(__FUNCTION__, 'Actual data: ' . json_encode($openerData), 0);
         if ($Update) {
-            if (!empty($openerConfig)) {
-                if (array_key_exists('openerAdvancedConfig', $openerConfig)) {
-                    if (is_array($openerConfig['openerAdvancedConfig'])) {
-                        $doorbellSuppression = $openerConfig['openerAdvancedConfig']['doorbellSuppression'];
+            if (!empty($openerData)) {
+                //Update values
+                $deviceState = 0;
+                $batteryState = 2;
+                if (array_key_exists('state', $openerData)) {
+                    if (array_key_exists('state', $openerData['state'])) {
+                        $deviceState = $openerData['state']['state'];
+                    }
+                    if (array_key_exists('batteryCritical', $openerData['state'])) {
+                        $batteryState = $openerData['state']['batteryCritical'];
+                    }
+                }
+                $this->SetValue('DeviceState', $deviceState);
+                $this->SetValue('BatteryState', $batteryState);
+                if (array_key_exists('openerAdvancedConfig', $openerData)) {
+                    if (is_array($openerData['openerAdvancedConfig'])) {
+                        $doorbellSuppression = $openerData['openerAdvancedConfig']['doorbellSuppression'];
                         switch ($doorbellSuppression) {
                             case 0: //All off
                                 $this->SetValue('RingSuppressionRing', false);
@@ -273,23 +335,47 @@ class NukiOpenerWebAPI extends IPSModule
                                 break;
                         }
                         //Sounds
-                        $this->SetValue('SoundDoorbellRings', $openerConfig['openerAdvancedConfig']['soundRing']);
-                        $this->SetValue('SoundOpenViaApp', $openerConfig['openerAdvancedConfig']['soundOpen']);
-                        $this->SetValue('SoundRingToOpen', $openerConfig['openerAdvancedConfig']['soundRto']);
-                        $this->SetValue('SoundContinuousMode', $openerConfig['openerAdvancedConfig']['soundCm']);
-                        $this->SetValue('Volume', $openerConfig['openerAdvancedConfig']['soundLevel']);
+                        $this->SetValue('SoundDoorbellRings', $openerData['openerAdvancedConfig']['soundRing']);
+                        $this->SetValue('SoundOpenViaApp', $openerData['openerAdvancedConfig']['soundOpen']);
+                        $this->SetValue('SoundRingToOpen', $openerData['openerAdvancedConfig']['soundRto']);
+                        $this->SetValue('SoundContinuousMode', $openerData['openerAdvancedConfig']['soundCm']);
+                        $this->SetValue('Volume', $openerData['openerAdvancedConfig']['soundLevel']);
                     }
                 }
             }
         }
-        return json_encode($openerConfig);
+        return json_encode($openerData);
     }
 
-    ##### Request Action
+    public function OpenDoor(): void
+    {
+        $smartLockID = $this->ReadPropertyString('SmartLockID');
+        if (empty($smartLockID)) {
+            return;
+        }
+        if (!$this->HasActiveParent()) {
+            return;
+        }
+        $data = [];
+        $buffer = [];
+        $data['DataID'] = '{7F9C82E4-FF89-7856-2F13-E5A1992167D6}';
+        $buffer['Command'] = 'SetSmartLockAction';
+        $buffer['Params'] = ['smartlockId' => $smartLockID, 'action' => 3, 'option' => 0];
+        $data['Buffer'] = $buffer;
+        $data = json_encode($data);
+        $this->SendDebug(__FUNCTION__, 'Data: ' . $data, 0);
+        $this->SendDataToParent($data);
+    }
+
+    #################### Request Action
 
     public function RequestAction($Ident, $Value): void
     {
         switch ($Ident) {
+            case 'Door':
+                $this->OpenDoor();
+                break;
+
             case 'RingSuppressionRing':
             case 'RingSuppressionRingToOpen':
             case 'RingSuppressionContinuousMode':
@@ -305,7 +391,7 @@ class NukiOpenerWebAPI extends IPSModule
         }
     }
 
-    #################### Private
+    #################### Private methods
 
     private function KernelReady(): void
     {
@@ -318,9 +404,12 @@ class NukiOpenerWebAPI extends IPSModule
         if (empty($smartLockID)) {
             return;
         }
+        if (!$this->HasActiveParent()) {
+            return;
+        }
 
         //Get configuration
-        $config = json_decode($this->GetOpenerConfiguration(false), true);
+        $config = json_decode($this->GetOpenerData(false), true);
 
         // Prepare data
         $doorbellSuppression = 0;

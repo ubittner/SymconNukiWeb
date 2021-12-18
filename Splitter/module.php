@@ -82,6 +82,11 @@ class NukiSplitterWebAPI extends IPSModule
                 $response = $this->UpdateOpenerAdvancedConfig($params['smartlockId'], $params['openerAdvancedConfig']);
                 break;
 
+            case 'SetSmartLockAction':
+                $params = (array) $data->Buffer->Params;
+                $response = $this->SetSmartLockAction($params['smartlockId'], $params['action'], $params['option']);
+                break;
+
             case 'SendDataToNukiWeb':
                 $params = (array) $data->Buffer->Params;
                 $response = $this->SendDataToNukiWeb($params['endpoint'], $params['customRequest'], $params['postfields']);

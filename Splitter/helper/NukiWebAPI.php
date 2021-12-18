@@ -27,6 +27,30 @@ trait NukiWebAPI
         return $this->SendDataToNukiWeb($endpoint, 'POST', $Config);
     }
 
+    /**
+     * Lock & unlock a smartlock with options
+     * @param string $SmartLockID
+     * @param int $Action
+     * @param int $Option
+     * @return string
+     */
+    public function SetSmartLockAction(string $SmartLockID, int $Action, int $Option): string
+    {
+        $endpoint = 'https://api.nuki.io/smartlock/' . $SmartLockID . '/action';
+        /*
+         * action (integer):
+         * The action:
+         * type=0: 1 unlock, 2 lock, 3 unlatch, 4 lock 'n' go, 5 lock 'n' go with unlatch;
+         * type=1: 1 unlock;
+         * type=2: 1 activate ring to open, 2 deactivate ring to open, 3 open (electric strike actuation), 6 activate continuous mode, 7 deactivate continuous mode
+         *
+         * option (integer, optional):
+         * The option mask: 0 none, 2 force, 4 full lock
+         */
+        $postfields = '{"action": ' . $Action . ',"option": ' . $Option . '}';
+        return $this->SendDataToNukiWeb($endpoint, 'POST', $postfields);
+    }
+
     #################### Private
 
     public function SendDataToNukiWeb(string $Endpoint, string $CustomRequest, string $Postfields): string

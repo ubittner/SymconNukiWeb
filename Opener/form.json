@@ -59,8 +59,8 @@
       "items": [
         {
           "type": "Button",
-          "caption": "Show configuration",
-          "onClick": "$config=NUKIOW_GetOpenerConfiguration($id, true); print_r(json_decode($config, true));"
+          "caption": "Show device data",
+          "onClick": "$config=NUKIOW_GetOpenerData($id, true); print_r(json_decode($config, true));"
         }
       ]
     }
