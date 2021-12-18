@@ -30,7 +30,8 @@
       "No sound": "Kein Sound",
       "Doorbell rings": "Klingeln",
       "Open via app": "Öffnen via App",
-      "Volume": "Lautstärke"
+      "Volume": "Lautstärke",
+      "LED signal on the Opener": "LED-Signal am Opener"
     }
   }
 }

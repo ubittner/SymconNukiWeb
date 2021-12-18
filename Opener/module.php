@@ -164,6 +164,17 @@ class NukiOpenerWebAPI extends IPSModule
         $this->RegisterVariableInteger('Volume', $this->Translate('Volume'), $profile, 450);
         $this->EnableAction('Volume');
 
+        //Label LED
+        $this->RegisterVariableString('LabelOpenerLED', $this->Translate('LED'), '', 500);
+
+        //Opener LED
+        $id = @$this->GetIDForIdent('OpenerLED');
+        $this->RegisterVariableBoolean('OpenerLED', $this->Translate('LED signal on the Opener'), '~Switch', 510);
+        $this->EnableAction('OpenerLED');
+        if ($id == false) {
+            IPS_SetIcon($this->GetIDForIdent('OpenerLED'), 'Bulb');
+        }
+
         ##### Timer
 
         $this->RegisterTimer('Update', 0, self::MODULE_PREFIX . '_GetOpenerData(' . $this->InstanceID . ', true);');
@@ -269,7 +280,7 @@ class NukiOpenerWebAPI extends IPSModule
         $this->SendDebug(__FUNCTION__, 'Actual data: ' . json_encode($openerData), 0);
         if ($Update) {
             if (!empty($openerData)) {
-                //Update values
+                //Device & battery state
                 $deviceState = 0;
                 $batteryState = 2;
                 if (array_key_exists('state', $openerData)) {
@@ -284,6 +295,7 @@ class NukiOpenerWebAPI extends IPSModule
                 $this->SetValue('BatteryState', $batteryState);
                 if (array_key_exists('openerAdvancedConfig', $openerData)) {
                     if (is_array($openerData['openerAdvancedConfig'])) {
+                        //Doorbell suppression
                         $doorbellSuppression = $openerData['openerAdvancedConfig']['doorbellSuppression'];
                         switch ($doorbellSuppression) {
                             case 0: //All off
@@ -334,12 +346,18 @@ class NukiOpenerWebAPI extends IPSModule
                                 $this->SetValue('RingSuppressionContinuousMode', true);
                                 break;
                         }
-                        //Sounds
+                        //Sounds & volume
                         $this->SetValue('SoundDoorbellRings', $openerData['openerAdvancedConfig']['soundRing']);
                         $this->SetValue('SoundOpenViaApp', $openerData['openerAdvancedConfig']['soundOpen']);
                         $this->SetValue('SoundRingToOpen', $openerData['openerAdvancedConfig']['soundRto']);
                         $this->SetValue('SoundContinuousMode', $openerData['openerAdvancedConfig']['soundCm']);
                         $this->SetValue('Volume', $openerData['openerAdvancedConfig']['soundLevel']);
+                    }
+                }
+                // Opener LED
+                if (array_key_exists('config', $openerData)) {
+                    if (array_key_exists('ledEnabled', $openerData['config'])) {
+                        $this->SetValue('OpenerLED', (bool) $openerData['config']['ledEnabled']);
                     }
                 }
             }
@@ -388,6 +406,11 @@ class NukiOpenerWebAPI extends IPSModule
                 $this->UpdateAdvanceConfig();
                 break;
 
+            case 'OpenerLED':
+                $this->SetValue($Ident, $Value);
+                $this->UpdateConfig();
+                break;
+
         }
     }
 
@@ -396,6 +419,43 @@ class NukiOpenerWebAPI extends IPSModule
     private function KernelReady(): void
     {
         $this->ApplyChanges();
+    }
+
+    private function UpdateConfig(): void
+    {
+        $smartLockID = $this->ReadPropertyString('SmartLockID');
+        if (empty($smartLockID)) {
+            return;
+        }
+        if (!$this->HasActiveParent()) {
+            return;
+        }
+
+        //Get configuration
+        $config = json_decode($this->GetOpenerData(false), true);
+
+        // Prepare data
+        $openerConfig = [];
+        if (array_key_exists('config', $config)) {
+            if (is_array($config['config'])) {
+                $config['config']['ledEnabled'] = $this->GetValue('OpenerLED');
+            }
+            $openerConfig = $config['config'];
+        }
+        $this->SendDebug(__FUNCTION__, 'New config: ' . json_encode($openerConfig), 0);
+
+        //Update data
+        if (empty($openerConfig)) {
+            return;
+        }
+        $data = [];
+        $buffer = [];
+        $data['DataID'] = '{7F9C82E4-FF89-7856-2F13-E5A1992167D6}';
+        $buffer['Command'] = 'UpdateSmartLockConfig';
+        $buffer['Params'] = ['smartlockId' => $smartLockID, 'config' => json_encode($openerConfig)];
+        $data['Buffer'] = $buffer;
+        $data = json_encode($data);
+        $this->SendDataToParent($data);
     }
 
     private function UpdateAdvanceConfig(): void
@@ -423,20 +483,16 @@ class NukiOpenerWebAPI extends IPSModule
             $doorbellSuppression += 1;
         }
         $openerAdvancedConfig = [];
-        if (array_key_exists('smartlockId', $config)) {
-            if ($config['smartlockId'] == $smartLockID) {
-                if (array_key_exists('openerAdvancedConfig', $config)) {
-                    if (is_array($config['openerAdvancedConfig'])) {
-                        $config['openerAdvancedConfig']['doorbellSuppression'] = $doorbellSuppression;
-                        $config['openerAdvancedConfig']['soundRing'] = $this->GetValue('SoundDoorbellRings');
-                        $config['openerAdvancedConfig']['soundOpen'] = $this->GetValue('SoundOpenViaApp');
-                        $config['openerAdvancedConfig']['soundRto'] = $this->GetValue('SoundRingToOpen');
-                        $config['openerAdvancedConfig']['soundCm'] = $this->GetValue('SoundContinuousMode');
-                        $config['openerAdvancedConfig']['soundLevel'] = $this->GetValue('Volume');
-                    }
-                }
-                $openerAdvancedConfig = $config['openerAdvancedConfig'];
+        if (array_key_exists('openerAdvancedConfig', $config)) {
+            if (is_array($config['openerAdvancedConfig'])) {
+                $config['openerAdvancedConfig']['doorbellSuppression'] = $doorbellSuppression;
+                $config['openerAdvancedConfig']['soundRing'] = $this->GetValue('SoundDoorbellRings');
+                $config['openerAdvancedConfig']['soundOpen'] = $this->GetValue('SoundOpenViaApp');
+                $config['openerAdvancedConfig']['soundRto'] = $this->GetValue('SoundRingToOpen');
+                $config['openerAdvancedConfig']['soundCm'] = $this->GetValue('SoundContinuousMode');
+                $config['openerAdvancedConfig']['soundLevel'] = $this->GetValue('Volume');
             }
+            $openerAdvancedConfig = $config['openerAdvancedConfig'];
         }
         $this->SendDebug(__FUNCTION__, 'New advanced config: ' . json_encode($openerAdvancedConfig), 0);
 

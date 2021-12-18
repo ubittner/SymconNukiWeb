@@ -15,6 +15,19 @@ trait NukiWebAPI
     }
 
     /**
+     * Updates a smartlock config
+     * @param string $SmartLockID
+     * @param string $Config
+     * @return string
+     */
+    public function UpdateSmartLockConfig(string $SmartLockID, string $Config): string
+    {
+        $this->SendDebug(__FUNCTION__, 'Config: ' . $Config, 0);
+        $endpoint = 'https://api.nuki.io/smartlock/' . $SmartLockID . '/config';
+        return $this->SendDataToNukiWeb($endpoint, 'POST', $Config);
+    }
+
+    /**
      * Updates an opener advanced config
      * @param string $SmartLockID
      * @param string $Config
