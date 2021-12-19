@@ -11,7 +11,9 @@ trait NukiWebAPI
     public function GetSmartLocks(): string
     {
         $endpoint = 'https://api.nuki.io/smartlock';
-        return $this->SendDataToNukiWeb($endpoint, 'GET', '');
+        $result = $this->SendDataToNukiWeb($endpoint, 'GET', '');
+        $this->SendDebug(__FUNCTION__, 'Result: ' . $result, 0);
+        return $result;
     }
 
     /**
@@ -24,7 +26,9 @@ trait NukiWebAPI
     {
         $this->SendDebug(__FUNCTION__, 'Config: ' . $Config, 0);
         $endpoint = 'https://api.nuki.io/smartlock/' . $SmartLockID . '/config';
-        return $this->SendDataToNukiWeb($endpoint, 'POST', $Config);
+        $result = $this->SendDataToNukiWeb($endpoint, 'POST', $Config);
+        $this->SendDebug(__FUNCTION__, 'Result: ' . $result, 0);
+        return $result;
     }
 
     /**
@@ -37,7 +41,9 @@ trait NukiWebAPI
     {
         $this->SendDebug(__FUNCTION__, 'Config: ' . $Config, 0);
         $endpoint = 'https://api.nuki.io/smartlock/' . $SmartLockID . '/advanced/openerconfig';
-        return $this->SendDataToNukiWeb($endpoint, 'POST', $Config);
+        $result = $this->SendDataToNukiWeb($endpoint, 'POST', $Config);
+        $this->SendDebug(__FUNCTION__, 'Result: ' . $result, 0);
+        return $result;
     }
 
     /**
@@ -61,7 +67,9 @@ trait NukiWebAPI
          * The option mask: 0 none, 2 force, 4 full lock
          */
         $postfields = '{"action": ' . $Action . ',"option": ' . $Option . '}';
-        return $this->SendDataToNukiWeb($endpoint, 'POST', $postfields);
+        $result = $this->SendDataToNukiWeb($endpoint, 'POST', $postfields);
+        $this->SendDebug(__FUNCTION__, 'Result: ' . $result, 0);
+        return $result;
     }
 
     #################### Private
@@ -70,11 +78,13 @@ trait NukiWebAPI
     {
         $this->SendDebug(__FUNCTION__, 'Endpoint: ' . $Endpoint, 0);
         $this->SendDebug(__FUNCTION__, 'CustomRequest: ' . $CustomRequest, 0);
-        $body = '';
+        $result = [];
         $accessToken = $this->ReadPropertyString('APIToken');
         if (empty($accessToken)) {
-            return $body;
+            return json_encode($result);
         }
+        $httpCode = 0;
+        $body = '';
         $timeout = round($this->ReadPropertyInteger('Timeout') / 1000);
         //Send data to endpoint
         $ch = curl_init();
@@ -92,23 +102,25 @@ trait NukiWebAPI
                 'Content-Type: application/json']]);
         $response = curl_exec($ch);
         if (!curl_errno($ch)) {
-            switch ($http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE)) {
+            $httpCode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+            $this->SendDebug(__FUNCTION__, 'Response http code: ' . $httpCode, 0);
+            switch ($httpCode) {
                 case 200:  # OK
                     $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
                     $header = substr($response, 0, $header_size);
                     $body = substr($response, $header_size);
-                    $this->SendDebug(__FUNCTION__, 'Header: ' . $header, 0);
-                    $this->SendDebug(__FUNCTION__, 'Body: ' . $body, 0);
+                    $this->SendDebug(__FUNCTION__, 'Response header: ' . $header, 0);
+                    $this->SendDebug(__FUNCTION__, 'Response body: ' . $body, 0);
                     break;
 
-                default:
-                    $this->SendDebug(__FUNCTION__, 'HTTP Code: ' . $http_code, 0);
             }
         } else {
             $error_msg = curl_error($ch);
             $this->SendDebug(__FUNCTION__, 'An error has occurred: ' . json_encode($error_msg), 0);
         }
         curl_close($ch);
-        return $body;
+        $result = ['httpCode' => $httpCode, 'body' => $body];
+        $this->SendDebug(__FUNCTION__, 'Result: ' . json_encode($result), 0);
+        return json_encode($result);
     }
 }

@@ -71,6 +71,49 @@ class NukiOpenerWebAPI extends IPSModule
         IPS_SetVariableProfileAssociation($profile, 2, $this->Translate('Unknown'), '', -1);
         $this->RegisterVariableInteger('BatteryState', $this->Translate('Battery state'), $profile, 120);
 
+        //Label Ring to open
+        $this->RegisterVariableString('LabelRingToOpen', 'Ring to Open', '', 200);
+
+        //Ring to open
+        $id = @$this->GetIDForIdent('RingToOpen');
+        $this->RegisterVariableBoolean('RingToOpen', 'Ring to Open', '~Switch', 210);
+        $this->EnableAction('RingToOpen');
+        if ($id == false) {
+            IPS_SetIcon($this->GetIDForIdent('RingToOpen'), 'Alert');
+        }
+
+        //Ring to open timeout
+        $profile = self::MODULE_PREFIX . '.' . $this->InstanceID . '.RingToOpenTimeout';
+        if (!IPS_VariableProfileExists($profile)) {
+            IPS_CreateVariableProfile($profile, 1);
+        }
+        IPS_SetVariableProfileIcon($profile, 'Clock');
+        IPS_SetVariableProfileAssociation($profile, 5, '5 min', '', 0x0000FF);
+        IPS_SetVariableProfileAssociation($profile, 10, '10 min', '', 0x0000FF);
+        IPS_SetVariableProfileAssociation($profile, 15, '15 min', '', 0x0000FF);
+        IPS_SetVariableProfileAssociation($profile, 20, $this->Translate('20 min (default)'), '', 0x0000FF);
+        IPS_SetVariableProfileAssociation($profile, 30, '30 min', '', 0x0000FF);
+        IPS_SetVariableProfileAssociation($profile, 45, '45 min', '', 0x0000FF);
+        IPS_SetVariableProfileAssociation($profile, 60, '60 min', '', 0x0000FF);
+        $this->RegisterVariableInteger('RingToOpenTimeout', $this->Translate('Ring to Open timeout'), $profile, 220);
+        $this->EnableAction('RingToOpenTimeout');
+
+        //One time access
+        $id = @$this->GetIDForIdent('OneTimeAccess');
+        $this->RegisterVariableBoolean('OneTimeAccess', $this->Translate('One time access'), '~Switch', 230);
+        $this->EnableAction('OneTimeAccess');
+        if ($id == false) {
+            IPS_SetIcon($this->GetIDForIdent('OneTimeAccess'), 'Door');
+        }
+
+        //Continous mode
+        $id = @$this->GetIDForIdent('ContinuousMode');
+        $this->RegisterVariableBoolean('ContinuousMode', $this->Translate('Continuous mode'), '~Switch', 240);
+        $this->EnableAction('ContinuousMode');
+        if ($id == false) {
+            IPS_SetIcon($this->GetIDForIdent('ContinuousMode'), 'Door');
+        }
+
         //Label ring suppression
         $this->RegisterVariableString('LabelRingSuppression', $this->Translate('Ring suppression'), '', 300);
 
@@ -262,6 +305,7 @@ class NukiOpenerWebAPI extends IPSModule
         if (!$this->HasActiveParent()) {
             return $openerData;
         }
+        $this->SetTimerInterval('Update', 0);
         $data = [];
         $buffer = [];
         $data['DataID'] = '{7F9C82E4-FF89-7856-2F13-E5A1992167D6}';
@@ -269,8 +313,15 @@ class NukiOpenerWebAPI extends IPSModule
         $buffer['Params'] = '';
         $data['Buffer'] = $buffer;
         $data = json_encode($data);
-        $devices = json_decode($this->SendDataToParent($data), true);
-        foreach ($devices as $device) {
+        $result = json_decode($this->SendDataToParent($data), true);
+        $httpCode = $result['httpCode'];
+        $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
+        if ($httpCode != 200) {
+            $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 200!', 0);
+            return $openerData;
+        }
+        $this->SendDebug(__FUNCTION__, 'Body: ' . $result['body'], 0);
+        foreach (json_decode($result['body'], true) as $device) {
             if (array_key_exists('smartlockId', $device)) {
                 if ($device['smartlockId'] == $smartLockID) {
                     $openerData = $device;
@@ -280,12 +331,26 @@ class NukiOpenerWebAPI extends IPSModule
         $this->SendDebug(__FUNCTION__, 'Actual data: ' . json_encode($openerData), 0);
         if ($Update) {
             if (!empty($openerData)) {
-                //Device & battery state
+                //State
+                $ringToOpenState = false;
+                $continousModeState = false;
                 $deviceState = 0;
                 $batteryState = 2;
                 if (array_key_exists('state', $openerData)) {
                     if (array_key_exists('state', $openerData['state'])) {
                         $deviceState = $openerData['state']['state'];
+                        if ($deviceState == 3) {
+                            $ringToOpenState = true;
+                        }
+                    }
+                    if (array_key_exists('mode', $openerData['state'])) {
+                        if ($openerData['state']['mode'] == 3) {
+                            $continousModeState = true;
+                            $deviceState = 3;
+                        }
+                    }
+                    if (array_key_exists('batteryCritical', $openerData['state'])) {
+                        $batteryState = $openerData['state']['batteryCritical'];
                     }
                     if (array_key_exists('batteryCritical', $openerData['state'])) {
                         $batteryState = $openerData['state']['batteryCritical'];
@@ -293,8 +358,18 @@ class NukiOpenerWebAPI extends IPSModule
                 }
                 $this->SetValue('DeviceState', $deviceState);
                 $this->SetValue('BatteryState', $batteryState);
+                $this->SetValue('RingToOpen', $ringToOpenState);
+                $this->SetValue('ContinuousMode', $continousModeState);
+                // Advanced config
                 if (array_key_exists('openerAdvancedConfig', $openerData)) {
                     if (is_array($openerData['openerAdvancedConfig'])) {
+                        //Ring to open
+                        $oneTimeAccessState = false;
+                        if ($openerData['openerAdvancedConfig']['disableRtoAfterRing']) {
+                            $oneTimeAccessState = true;
+                        }
+                        $this->SetValue('OneTimeAccess', $oneTimeAccessState);
+                        $this->SetValue('RingToOpenTimeout', $openerData['openerAdvancedConfig']['rtoTimeout']);
                         //Doorbell suppression
                         $doorbellSuppression = $openerData['openerAdvancedConfig']['doorbellSuppression'];
                         switch ($doorbellSuppression) {
@@ -354,14 +429,16 @@ class NukiOpenerWebAPI extends IPSModule
                         $this->SetValue('Volume', $openerData['openerAdvancedConfig']['soundLevel']);
                     }
                 }
-                // Opener LED
+                //Config
                 if (array_key_exists('config', $openerData)) {
+                    //Opener LED
                     if (array_key_exists('ledEnabled', $openerData['config'])) {
                         $this->SetValue('OpenerLED', (bool) $openerData['config']['ledEnabled']);
                     }
                 }
             }
         }
+        $this->SetTimerInterval('Update', $this->ReadPropertyInteger('UpdateInterval') * 1000);
         return json_encode($openerData);
     }
 
@@ -374,15 +451,109 @@ class NukiOpenerWebAPI extends IPSModule
         if (!$this->HasActiveParent()) {
             return;
         }
+        $this->SetTimerInterval('Update', 0);
         $data = [];
         $buffer = [];
         $data['DataID'] = '{7F9C82E4-FF89-7856-2F13-E5A1992167D6}';
         $buffer['Command'] = 'SetSmartLockAction';
+        // action: 3 open (electric strike actuation)
         $buffer['Params'] = ['smartlockId' => $smartLockID, 'action' => 3, 'option' => 0];
         $data['Buffer'] = $buffer;
         $data = json_encode($data);
         $this->SendDebug(__FUNCTION__, 'Data: ' . $data, 0);
-        $this->SendDataToParent($data);
+        $result = json_decode($this->SendDataToParent($data), true);
+        $httpCode = $result['httpCode'];
+        $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
+        if ($httpCode != 204) {
+            $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 204!', 0);
+        }
+        $this->SetTimerInterval('Update', 5000);
+    }
+
+    public function ToggleRingToOpen(bool $State): void
+    {
+        $smartLockID = $this->ReadPropertyString('SmartLockID');
+        if (empty($smartLockID)) {
+            return;
+        }
+        if (!$this->HasActiveParent()) {
+            return;
+        }
+        $this->SetTimerInterval('Update', 0);
+        $this->SetValue('RingToOpen', $State);
+        $deviceState = $this->GetValue('DeviceState');
+        if ($State) {
+            $this->SetValue('DeviceState', 3);
+        }
+        // action: 1 activate ring to open, 2 deactivate ring to open
+        $action = 1;
+        if (!$State) {
+            $action = 2;
+            if (!$this->GetValue('ContinuousMode')) {
+                $this->SetValue('DeviceState', 1);
+            }
+        }
+        $data = [];
+        $buffer = [];
+        $data['DataID'] = '{7F9C82E4-FF89-7856-2F13-E5A1992167D6}';
+        $buffer['Command'] = 'SetSmartLockAction';
+        $buffer['Params'] = ['smartlockId' => $smartLockID, 'action' => $action, 'option' => 0];
+        $data['Buffer'] = $buffer;
+        $data = json_encode($data);
+        $this->SendDebug(__FUNCTION__, 'Data: ' . $data, 0);
+        $result = json_decode($this->SendDataToParent($data), true);
+        $httpCode = $result['httpCode'];
+        $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
+        if ($httpCode != 204) {
+            $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 204!', 0);
+            //Revert
+            $this->SetValue('RingToOpen', !$State);
+            $this->SetValue('DeviceState', $deviceState);
+        }
+        $this->SetTimerInterval('Update', 5000);
+    }
+
+    public function ToggleContinuousMode(bool $State): void
+    {
+        $smartLockID = $this->ReadPropertyString('SmartLockID');
+        if (empty($smartLockID)) {
+            return;
+        }
+        if (!$this->HasActiveParent()) {
+            return;
+        }
+        $this->SetTimerInterval('Update', 0);
+        $this->SetValue('ContinuousMode', $State);
+        $deviceState = $this->GetValue('DeviceState');
+        if ($State) {
+            $this->SetValue('DeviceState', 3);
+        }
+        // action: 6 activate continuous mode, 7 deactivate continuous mode
+        $action = 6;
+        if (!$State) {
+            $action = 7;
+            if (!$this->GetValue('RingToOpen')) {
+                $this->SetValue('DeviceState', 1);
+            }
+        }
+        $data = [];
+        $buffer = [];
+        $data['DataID'] = '{7F9C82E4-FF89-7856-2F13-E5A1992167D6}';
+        $buffer['Command'] = 'SetSmartLockAction';
+        $buffer['Params'] = ['smartlockId' => $smartLockID, 'action' => $action, 'option' => 0];
+        $data['Buffer'] = $buffer;
+        $data = json_encode($data);
+        $this->SendDebug(__FUNCTION__, 'Data: ' . $data, 0);
+        $result = json_decode($this->SendDataToParent($data), true);
+        $httpCode = $result['httpCode'];
+        $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
+        if ($httpCode != 204) {
+            $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 204!', 0);
+            //Revert
+            $this->SetValue('ContinuousMode', !$State);
+            $this->SetValue('DeviceState', $deviceState);
+        }
+        $this->SetTimerInterval('Update', 5000);
     }
 
     #################### Request Action
@@ -394,6 +565,16 @@ class NukiOpenerWebAPI extends IPSModule
                 $this->OpenDoor();
                 break;
 
+            case 'RingToOpen':
+                $this->ToggleRingToOpen($Value);
+                break;
+
+            case 'ContinuousMode':
+                $this->ToggleContinuousMode($Value);
+                break;
+
+            case 'RingToOpenTimeout':
+            case 'OneTimeAccess':
             case 'RingSuppressionRing':
             case 'RingSuppressionRingToOpen':
             case 'RingSuppressionContinuousMode':
@@ -430,9 +611,13 @@ class NukiOpenerWebAPI extends IPSModule
         if (!$this->HasActiveParent()) {
             return;
         }
+        $this->SetTimerInterval('Update', 0);
 
         //Get configuration
         $config = json_decode($this->GetOpenerData(false), true);
+        if (empty($config)) {
+            return;
+        }
 
         // Prepare data
         $openerConfig = [];
@@ -455,7 +640,13 @@ class NukiOpenerWebAPI extends IPSModule
         $buffer['Params'] = ['smartlockId' => $smartLockID, 'config' => json_encode($openerConfig)];
         $data['Buffer'] = $buffer;
         $data = json_encode($data);
-        $this->SendDataToParent($data);
+        $result = json_decode($this->SendDataToParent($data), true);
+        $httpCode = $result['httpCode'];
+        $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
+        if ($httpCode != 204) {
+            $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 204!', 0);
+        }
+        $this->SetTimerInterval('Update', 5000);
     }
 
     private function UpdateAdvanceConfig(): void
@@ -468,8 +659,13 @@ class NukiOpenerWebAPI extends IPSModule
             return;
         }
 
+        $this->SetTimerInterval('Update', 0);
+
         //Get configuration
         $config = json_decode($this->GetOpenerData(false), true);
+        if (empty($config)) {
+            return;
+        }
 
         // Prepare data
         $doorbellSuppression = 0;
@@ -485,6 +681,8 @@ class NukiOpenerWebAPI extends IPSModule
         $openerAdvancedConfig = [];
         if (array_key_exists('openerAdvancedConfig', $config)) {
             if (is_array($config['openerAdvancedConfig'])) {
+                $config['openerAdvancedConfig']['disableRtoAfterRing'] = $this->GetValue('OneTimeAccess');
+                $config['openerAdvancedConfig']['rtoTimeout'] = $this->GetValue('RingToOpenTimeout');
                 $config['openerAdvancedConfig']['doorbellSuppression'] = $doorbellSuppression;
                 $config['openerAdvancedConfig']['soundRing'] = $this->GetValue('SoundDoorbellRings');
                 $config['openerAdvancedConfig']['soundOpen'] = $this->GetValue('SoundOpenViaApp');
@@ -507,6 +705,12 @@ class NukiOpenerWebAPI extends IPSModule
         $buffer['Params'] = ['smartlockId' => $smartLockID, 'openerAdvancedConfig' => json_encode($openerAdvancedConfig)];
         $data['Buffer'] = $buffer;
         $data = json_encode($data);
-        $this->SendDataToParent($data);
+        $result = json_decode($this->SendDataToParent($data), true);
+        $httpCode = $result['httpCode'];
+        $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
+        if ($httpCode != 204) {
+            $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 204!', 0);
+        }
+        $this->SetTimerInterval('Update', 5000);
     }
 }
