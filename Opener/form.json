@@ -46,10 +46,36 @@
       "caption": "Name"
     },
     {
+      "type": "Label",
+      "caption": " "
+    },
+    {
       "type": "NumberSpinner",
       "name": "UpdateInterval",
       "caption": "Update interval",
       "suffix": "seconds"
+    },
+    {
+      "type": "Label",
+      "caption": " "
+    },
+    {
+      "type": "CheckBox",
+      "name": "UseActivityLog",
+      "caption": "Use activity log"
+    },
+    {
+      "type": "NumberSpinner",
+      "name": "ActivityLogPeriodLastDays",
+      "caption": "Period (last days)",
+      "minimum": 0
+    },
+    {
+      "type": "NumberSpinner",
+      "name": "ActivityLogMaximumEntries",
+      "caption": "Number of maximum entries",
+      "minimum": 1,
+      "maximum": 50
     }
   ],
   "actions": [
@@ -59,8 +85,23 @@
       "items": [
         {
           "type": "Button",
+          "caption": "Update device data",
+          "onClick": "$config=NUKIOW_GetOpenerData($id, true);"
+        },
+        {
+          "type": "Button",
           "caption": "Show device data",
-          "onClick": "$config=NUKIOW_GetOpenerData($id, true); print_r(json_decode($config, true));"
+          "onClick": "$config=NUKIOW_GetOpenerData($id, false); print_r(json_decode($config, true));"
+        },
+        {
+          "type": "Button",
+          "caption": "Update activity log",
+          "onClick": "$config=NUKIOW_GetActivityLog($id, true);"
+        },
+        {
+          "type": "Button",
+          "caption": "Show activity log",
+          "onClick": "$log=NUKIOW_GetActivityLog($id, false); print_r(json_decode($log, true));"
         }
       ]
     }

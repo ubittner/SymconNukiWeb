@@ -72,6 +72,19 @@ trait NukiWebAPI
         return $result;
     }
 
+    public function GetSmartLockLog(string $SmartLockID, string $Parameter): string
+    {
+        if (empty($Parameter)) {
+            $endpoint = 'https://api.nuki.io/smartlock/' . $SmartLockID . '/log';
+        } else {
+            $endpoint = 'https://api.nuki.io/smartlock/' . $SmartLockID . '/log?' . $Parameter;
+        }
+        $this->SendDebug(__FUNCTION__, 'Endpoint: ' . $endpoint, 0);
+        $result = $this->SendDataToNukiWeb($endpoint, 'GET', '');
+        $this->SendDebug(__FUNCTION__, 'Result: ' . $result, 0);
+        return $result;
+    }
+
     #################### Private
 
     public function SendDataToNukiWeb(string $Endpoint, string $CustomRequest, string $Postfields): string
