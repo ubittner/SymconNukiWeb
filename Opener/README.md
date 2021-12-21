@@ -24,8 +24,13 @@ Der Nutzer stimmt den o.a. Bedingungen, sowie den Lizenzbedingungen ausdrücklic
 
 ### 1. Funktionsumfang
 
-* Klingelunterdrückung de- bzw. aktivieren
+* Tür öffnen
+* Ring to Open ein- / ausschalten
+* Klingelunterdrückung ein- / ausschalten
+* Sounds
 * Lautstärke verändern
+* LED
+* Protokoll
 
 ### 2. Voraussetzungen
 
@@ -45,10 +50,17 @@ Der Nutzer stimmt den o.a. Bedingungen, sowie den Lizenzbedingungen ausdrücklic
 
 __Konfigurationsseite__:
 
-Name     | Beschreibung
--------- | ------------------
-diverse  | 
-         |
+Name                            | Beschreibung
+------------------------------- | ------------------
+Smart Lock ID                   | ID des Openers
+Account ID                      | ID des Benutzerkontos
+Auth ID                         | Authorisierungs ID
+Type                            | Gerätetyp 2 = Opener
+Name                            | Name des Gerätes
+Aktualisierungsintervall        | Intervall zur Aktualisierung
+Protokoll verwenden             | Protokoll verwenden
+Zeitraum (letzte Tage)          | Zeitraum
+Anzahl der maximalen Einträge   | Anzahl der maximalen Einträge   
 
 ### 5. Statusvariablen und Profile
 
@@ -56,29 +68,132 @@ Die Statusvariablen/Kategorien werden automatisch angelegt. Das Löschen einzeln
 
 #### Statusvariablen
 
-Name    | Typ     | Beschreibung
-------- | ------- | ------------
-diverse |         |
-        |         |
+Name                            | Typ     | Beschreibung
+------------------------------- | ------- | ----------------------------------------------------
+Door                            | integer | Öffnet die Tür
+DeviceState                     | integer | Status des Openers
+BatteryState                    | integer | Batteriestatus
+RingToOpen                      | boolean | Ring To Open ein- / ausschalten
+RingToOpenTimeout               | integer | Dauer Ring To Open
+OneTimeAccess                   | boolean | Einmal-Zutritt
+ContinuousMode                  | boolean | Dauermodus  ein- / ausschalten
+RingSuppressionRing             | boolean | Klingelunterdrückung Klingeln ein- / ausschalten
+RingSuppressionRingToOpen       | boolean | Klingelunterdrückung Ring To Open ein- / ausschalten
+RingSuppressionContinuousMode   | boolean | Klingelunterdrückung Dauermodus ein- / ausschalten
+SoundDoorbellRings              | integer | Sound Klingeln
+SoundOpenViaApp                 | integer | Sound Öffnen via App
+SoundRingToOpen                 | integer | Sound Ring To Open
+SoundContinuousMode             | integer | Sound Dauermodus
+Volume                          | integer | Lautstärke
+OpenerLED                       | boolean | LED-Signal am Opener ein- / ausschalten
+ActivityLog                     | string  | Protokoll
 
 #### Profile
 
-Name    | Typ
-------- | -------
-diverse |
-        |
+Name                | Typ
+------------------- | -------
+Door                | integer
+DeviceState         | integer  
+BatteryState        | integer
+RingToOpenTimeout   | integer
+SoundDoorbellRings  | integer
+SoundOpenViaApp     | integer
+SoundRingToOpen     | integer
+SoundContinuousMode | integer
+Volume              | integer
 
 ### 6. WebFront
 
 Die Funktionalität, die das Modul im WebFront bietet.
 
-* Klingelunterdrückung de- bzw. aktivieren
+* Tür öffnen
+* Ring to Open ein- / ausschalten
+* Klingelunterdrückung ein- / ausschalten
+* Sounds einstellen
 * Lautstärke verändern
+* LED ein- / ausschalten
+* Protokoll
 
 ### 7. PHP-Befehlsreferenz
 
-`boolean NUKIOW_BeispielFunktion(integer $InstanzID);`
-Erklärung der Funktion.
+```text
+Protokoll des Nuki Openers abrufen
+
+NUKIOW_GetActivityLog(integer $InstanceID, bool $Update);
+Liefert als Rückgabewert das Protokoll als String des Nuki Openers.
+
+Es gelten die Einschränkungen der Instanzkonfiguration (Zeitraum letzte Tage / Anzahl der maximalen Einträge)
+
+$Update = false;	//ruft nur die Daten ab
+$Update = true;		//aktualisiert das Protokoll im WebFront
 
 Beispiel:
-`NUKIOW_BeispielFunktion(12345);`
+
+$log = NUKIOW_GetActivityLog(12345, true);
+```
+
+```text
+Konfiguration des Nuki Openers abrufen
+
+NUKIOW_GetOpenerData(integer $InstanceID, bool $Update);
+Liefert als Rückgabewert einen json kodierten String mit den Konfigurationsdaten des Nuki Openers.
+
+$Update = false;	//ruft nur die Daten ab
+$Update = true;		//aktualisiert die Einstellungen im WebFront
+
+Beispiel:
+
+$data = NUKIOW_GetOpenerData(12345, true);
+```
+
+```text
+Tür öffnen
+
+NUKIOW_OpenDoor(integer $InstanceID);
+Liefert keinen Rückgabewert.
+
+Beispiel:
+
+$data = NUKIOW_OpenDoor(12345);
+```
+
+```text
+Dauermodus ein- / ausschalten
+
+NUKIOW_ToggleContinuousMode(integer $InstanceID, bool $State);
+Liefert keinen Rückgabewert.
+
+$State = false;		//ausschalten
+$State = true; 		//einschalten
+
+Beispiel:
+
+$data = NUKIOW_ToggleContinuousMode(12345, true);
+```
+
+```text
+Ring To Open ein- / ausschalten
+
+NUKIOW_ToggleRingToOpen(integer $InstanceID, bool $State);
+Liefert keinen Rückgabewert.
+
+$State = false;		//ausschalten
+$State = true; 		//einschalten
+
+Beispiel:
+
+$data = NUKIOW_ToggleRingToOpen(12345, true);
+```
+
+```text
+Daten aktualisieren
+
+NUKIOW_UpdateData(integer $InstanceID);
+Liefert keinen Rückgabewert.
+
+Fragt die Daten des Nuki Openers ab und aktualisiert die Instanz.
+
+Beispiel:
+
+$data = NUKIOW_UpdateData(12345);
+```

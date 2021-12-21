@@ -28,7 +28,7 @@ Der Nutzer stimmt den o.a. Bedingungen, sowie den Lizenzbedingungen ausdrücklic
 - IP-Symcon ab Version 5.5
 - [Nuki Web Aktivierung](https://web.nuki.io/#/login)
 - Nuki Web API Token  
-
+  
   [![Image](../imgs/NUKI_API_Token.png)](https://nuki.io/de/)
 
 ### 3. Software-Installation
@@ -68,22 +68,60 @@ Die Splitter Instanz hat im WebFront keine Funktionalität.
 ### 7. PHP-Befehlsreferenz
 
 ```text
-Liste der intelligenten Schlösser (Geräte) abrufen
+Liste der Smart Locks (Geräte) abrufen
 
-NUKISW_GetSmartLocks(integer $InstanzID);
-Liefert als Rückgabewert einen json-String mit allen vorhandenen Geräten.
+NUKISW_GetSmartLocks(integer $InstanceID);
+Liefert als Rückgabewert einen json kodierten String mit Daten der vorhandenen Geräten.
 
 Beispiel:
 
 $devices = NUKISW_GetSmartLocks(12345);
 ```
 
+```text
+Aktualisiert eine Smart Lock (Geräte) Konfiguration.
+
+NUKISW_UpdateSmartLockConfig(integer $InstanceID, string $SmartLockID, string $Config);
+Liefert als Rückgabewert einen json kodierten String mit dem HTTP Code.
+
+$config = '{
+            "name": "string",
+            "latitude": 0,
+            "longitude": 0,
+            "capabilities": 0,
+            "autoUnlatch": true,
+            "liftUpHandle": true,
+            "pairingEnabled": true,
+            "buttonEnabled": true,
+            "ledEnabled": true,
+            "ledBrightness": 0,
+            "timezoneOffset": 0,
+            "daylightSavingMode": 0,
+            "fobPaired": true,
+            "fobAction1": 0,
+            "fobAction2": 0,
+            "fobAction3": 0,
+            "singleLock": true,
+            "operatingMode": 0,
+            "advertisingMode": 0,
+            "keypadPaired": true,
+            "homekitState": 0,
+            "timezoneId": 0,
+            "deviceType": 0,
+            "wifiEnabled": true,
+            "operationId": "string"
+           }';
+
+Beispiel:
+
+$config = NUKISW_UpdateSmartLockConfig(12345, '987654321', $config);
+```
 
 ```text
 Aktualisiert die erweiterte Konfiguration eines Nuki Openers
 
-NUKISW_UpdateOpenerAdvancedConfig(integer $InstanzID, string $SmartLockID, string $Config);
-Liefert keinen Rückgabewert
+NUKISW_UpdateOpenerAdvancedConfig(integer $InstanceID, string $SmartLockID, string $AdvancedConfig);
+Liefert als Rückgabewert einen json kodierten String mit dem HTTP Code.
 
 Beispiel:
 
@@ -111,5 +149,46 @@ $config = '{
             "autoUpdateEnabled":true
            }';
            
-$devices = NUKISW_GetSmartLocks(12345, '123456789', $config);
+$advancedConfig = NUKISW_UpdateOpenerAdvancedConfig(12345, '987654321', $advancedConfig);
+```
+
+```text
+Sperren und Entsperren eines Smart Locks (Gerätes) mit Optionen
+
+NUKISW_SetSmartLockAction(integer $InstanceID, string $SmartLockID, int $Action, int $Option);
+Liefert als Rückgabewert einen json kodierten String mit dem HTTP Code.
+
+$Action:
+Nuki Smart Lock:    1 unlock
+                    2 lock
+                    3 unlatch
+                    4 lock 'n' go
+                    5 lock 'n' go with unlatch
+Nuki Box:           1 unlock
+Nuki Opener:        1 activate ring to open
+                    2 deactivate ring to open
+                    3 open (electric strike actuation)
+                    6 activate continuous mode
+                    7 deactivate continuous mode
+                    
+$Option:            0 none
+                    2 force
+                    4 full lock
+                    
+Beispiel:
+
+$devices = NUKISW_SetSmartLockAction(12345, '987654321', 3, 0);
+```
+
+```text
+Eine Protokoll-Liste von einem Smart Lock (Gerät) erhalten
+
+NUKISW_GetSmartLockLog(integer $InstanceID, string $SmartLockID, string $Parameter);
+Liefert als Rückgabewert einen json kodierten String mit den Daten.
+
+$Parameter = 'fromDate=' . $datetime . '&limit=' . $limit;
+
+Beispiel:
+
+$log = NUKISW_GetSmartLockLog(12345, '987654321', $Parameter);
 ```
