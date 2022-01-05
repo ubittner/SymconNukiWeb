@@ -59,8 +59,8 @@ trait NukiWebAPI
         /*
          * action (integer):
          * The action:
-         * type=0: 1 unlock, 2 lock, 3 unlatch, 4 lock 'n' go, 5 lock 'n' go with unlatch;
-         * type=1: 1 unlock;
+         * type=0: 1 unlock, 2 lock, 3 unlatch, 4 lock 'n' go, 5 lock 'n' go with unlatch
+         * type=1: 1 unlock
          * type=2: 1 activate ring to open, 2 deactivate ring to open, 3 open (electric strike actuation), 6 activate continuous mode, 7 deactivate continuous mode
          *
          * option (integer, optional):
@@ -72,6 +72,12 @@ trait NukiWebAPI
         return $result;
     }
 
+    /**
+     * Get a list of smartlock logs
+     * @param string $SmartLockID
+     * @param string $Parameter
+     * @return string
+     */
     public function GetSmartLockLog(string $SmartLockID, string $Parameter): string
     {
         if (empty($Parameter)) {
