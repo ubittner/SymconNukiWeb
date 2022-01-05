@@ -348,7 +348,6 @@ class NukiOpenerWebAPI extends IPSModule
                     $openerData = $device;
                 }
             }
-
         }
         $this->SendDebug(__FUNCTION__, 'Actual data: ' . json_encode($openerData), 0);
         if ($Update) {
