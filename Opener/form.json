@@ -37,11 +37,6 @@
     },
     {
       "type": "ValidationTextBox",
-      "name": "Type",
-      "caption": "Type"
-    },
-    {
-      "type": "ValidationTextBox",
       "name": "Name",
       "caption": "Name"
     },
@@ -85,23 +80,38 @@
       "items": [
         {
           "type": "Button",
-          "caption": "Update device data",
-          "onClick": "$config=NUKIOW_GetOpenerData($id, true);"
+          "caption": "Show device type",
+          "onClick": "$deviceType=NUKIOW_GetDeviceType($id); echo $deviceType;"
         },
         {
-          "type": "Button",
-          "caption": "Show device data",
-          "onClick": "$config=NUKIOW_GetOpenerData($id, false); print_r(json_decode($config, true));"
+          "type": "RowLayout",
+          "items": [
+            {
+              "type": "Button",
+              "caption": "Update device data",
+              "onClick": "$config=NUKIOW_GetOpenerData($id, true);"
+            },
+            {
+              "type": "Button",
+              "caption": "Show device data",
+              "onClick": "$config=NUKIOW_GetOpenerData($id, false); print_r(json_decode($config, true));"
+            }
+          ]
         },
         {
-          "type": "Button",
-          "caption": "Update activity log",
-          "onClick": "$config=NUKIOW_GetActivityLog($id, true);"
-        },
-        {
-          "type": "Button",
-          "caption": "Show activity log",
-          "onClick": "$log=NUKIOW_GetActivityLog($id, false); print_r(json_decode($log, true));"
+          "type": "RowLayout",
+          "items": [
+            {
+              "type": "Button",
+              "caption": "Update activity log",
+              "onClick": "$config=NUKIOW_GetActivityLog($id, true);"
+            },
+            {
+              "type": "Button",
+              "caption": "Show activity log",
+              "onClick": "$log=NUKIOW_GetActivityLog($id, false); print_r(json_decode($log, true));"
+            }
+          ]
         }
       ]
     }

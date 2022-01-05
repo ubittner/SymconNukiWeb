@@ -3,10 +3,6 @@
 /** @noinspection DuplicatedCode */
 /** @noinspection PhpUnused */
 
-// Roadmap:
-// create function UpdateData, contains GetOpenerData & UpdateActivityLog
-// Add show log button to configuration form actions
-
 declare(strict_types=1);
 
 class NukiOpenerWebAPI extends IPSModule
@@ -25,7 +21,6 @@ class NukiOpenerWebAPI extends IPSModule
         $this->RegisterPropertyString('SmartLockID', '');
         $this->RegisterPropertyString('AccountID', '');
         $this->RegisterPropertyString('AuthID', '');
-        $this->RegisterPropertyString('Type', '');
         $this->RegisterPropertyString('Name', '');
         $this->RegisterPropertyInteger('UpdateInterval', 300);
         $this->RegisterPropertyBoolean('UseActivityLog', true);
@@ -235,6 +230,10 @@ class NukiOpenerWebAPI extends IPSModule
             IPS_SetIcon($this->GetIDForIdent('ActivityLog'), 'Database');
         }
 
+        ##### Attributes
+
+        $this->RegisterAttributeInteger('Type', -1);
+
         ##### Timer
 
         $this->RegisterTimer('Update', 0, self::MODULE_PREFIX . '_UpdateData(' . $this->InstanceID . ');');
@@ -274,7 +273,6 @@ class NukiOpenerWebAPI extends IPSModule
         }
 
         $this->UpdateData();
-
         $this->SetTimerInterval('Update', $this->ReadPropertyInteger('UpdateInterval') * 1000);
     }
 
@@ -313,6 +311,11 @@ class NukiOpenerWebAPI extends IPSModule
 
     #################### Public methods
 
+    public function GetDeviceType(): int
+    {
+        return $this->ReadAttributeInteger('Type');
+    }
+
     public function GetOpenerData(bool $Update): string
     {
         $openerData = '';
@@ -345,10 +348,17 @@ class NukiOpenerWebAPI extends IPSModule
                     $openerData = $device;
                 }
             }
+
         }
         $this->SendDebug(__FUNCTION__, 'Actual data: ' . json_encode($openerData), 0);
         if ($Update) {
             if (!empty($openerData)) {
+                //Type
+                if (array_key_exists('type', $openerData)) {
+                    if ($this->ReadAttributeInteger('Type') == -1) {
+                        $this->WriteAttributeInteger('Type', $openerData['type']);
+                    }
+                }
                 //State
                 $ringToOpenState = false;
                 $continousModeState = false;
@@ -881,7 +891,7 @@ class NukiOpenerWebAPI extends IPSModule
             return;
         }
 
-        // Prepare data
+        //Prepare data
         $openerConfig = [];
         if (array_key_exists('config', $config)) {
             if (is_array($config['config'])) {
