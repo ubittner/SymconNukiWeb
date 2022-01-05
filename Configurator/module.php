@@ -132,7 +132,6 @@ class NukiConfiguratorWebAPI extends IPSModule
                                     'SmartLockID'  => (string) $smartLockID,
                                     'AccountID' => (string) $accountID,
                                     'AuthID' => (string) $authID,
-                                    'Type' => (string) $deviceType,
                                     'Name' => (string) $name
                                 ],
                                 'location' => $location
@@ -159,7 +158,6 @@ class NukiConfiguratorWebAPI extends IPSModule
                                     'SmartLockID'  => (string) $smartLockID,
                                     'AccountID' => (string) $accountID,
                                     'AuthID' => (string) $authID,
-                                    'Type' => (string) $deviceType,
                                     'Name' => (string) $name
                                 ],
                                 'location' => $location
@@ -185,7 +183,6 @@ class NukiConfiguratorWebAPI extends IPSModule
                                     'SmartLockID' => (string) $smartLockID,
                                     'AccountID'   => (string) $accountID,
                                     'AuthID'      => (string) $authID,
-                                    'Type'        => (string) $deviceType,
                                     'Name'        => (string) $name
                                 ],
                                 'location' => $location
@@ -211,7 +208,6 @@ class NukiConfiguratorWebAPI extends IPSModule
                                     'SmartLockID'  => (string) $smartLockID,
                                     'AccountID' => (string) $accountID,
                                     'AuthID' => (string) $authID,
-                                    'Type' => (string) $deviceType,
                                     'Name' => (string) $name
                                 ],
                                 'location' => $location
