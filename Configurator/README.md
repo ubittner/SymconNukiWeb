@@ -2,7 +2,7 @@
 
 [![Image](../imgs/NUKI_Logo.png)](https://nuki.io/de/)  
 
-Dieses Modul listet die vorhandenen Nuki Geräte mittels Nuki Web API auf.  
+Dieses Modul listet die vorhandenen Nuki Geräte mittels [Nuki Web API](https://developer.nuki.io/t/nuki-web-api/25) auf.  
 Der Nutzer kann die ausgewählten Geräte automatisch anlegen lassen.  
 
 Für dieses Modul besteht kein Anspruch auf Fehlerfreiheit, Weiterentwicklung, sonstige Unterstützung oder Support.  
@@ -27,18 +27,22 @@ Der Nutzer stimmt den o.a. Bedingungen, sowie den Lizenzbedingungen ausdrücklic
 
 ### 2. Voraussetzungen
 
-- IP-Symcon ab Version 5.5
-- Nuki Splitter Web API Instanz
-- Nuki Gerät
+- IP-Symcon ab Version 6.0
+- Nuki Smart Lock 1.0, 2.0, 3.0 (Pro)
+- Nuki Opener
+- Nuki Bridge
+- [Nuki Web Zugang](https://web.nuki.io/#/login)
+- [Nuki Splitter Web API](../Splitter) Instanz inkl. API Token
 
 ### 3. Software-Installation
 
 * Bei kommerzieller Nutzung (z.B. als Einrichter oder Integrator) wenden Sie sich bitte zunächst an den Autor.
 * Über das Module Control folgende URL hinzufügen `https://github.com/ubittner/SymconNukiWeb`
+* Über den Module Store das 'Nuki Web'-Modul, sofern bereits im Module Store vorhanden, installieren.
 
 ### 4. Einrichten der Instanzen in IP-Symcon
 
-- In IP-Symcon an beliebiger Stelle `Instanz hinzufügen` auswählen und `Nuki Configurator Web API` auswählen, welches unter dem Hersteller `NUKI` aufgeführt ist. Es wird eine Nuki Configurator Web API Instanz unter der Kategorie `Konfigurator Instanzen` angelegt.  
+- In IP-Symcon an beliebiger Stelle `Instanz hinzufügen` auswählen und `Nuki Konfigurator Web API` auswählen, welches unter dem Hersteller `NUKI` aufgeführt ist. Es wird eine Nuki Konfigurator Web API Instanz unter der Kategorie `Konfigurator Instanzen` angelegt.  
 
 __Konfigurationsseite__:
 
@@ -56,9 +60,9 @@ Erstellen       | Erstellt für das ausgewählte Nuki Gerät eine Instanz
 
 __Vorgehensweise__:
 
-Über die Schaltfläche `AKTUALISIEREN` können Sie im Nuki Configurator Web API die Liste der verfügbaren Nuki Geräte jederzeit aktualisieren.  
+Über die Schaltfläche `AKTUALISIEREN` können Sie im Nuki Konfigurator Web API die Liste der verfügbaren Nuki Geräte jederzeit aktualisieren.  
 Wählen Sie `ALLE ERSTELLEN` oder wählen Sie ein Nuki Gerät aus der Liste aus und drücken dann die Schaltfläche `ERSTELLEN`, um das Nuki Gerät automatisch anzulegen.
-Sofern noch keine Nuki Splitter Web API Instanz angelegt wurde, muss einmalig beim Erstellen der Nuki Configurator Web API Instanz die Konfiguration der Nuki Splitter web API Instanz vorgenommen werden.  
+Sofern noch keine [Nuki Splitter Web API](../Splitter) Instanz angelegt wurde, muss einmalig beim Erstellen der Nuki Konfigurator Web API Instanz die Konfiguration der Nuki Splitter Web API Instanz vorgenommen werden.  
 Geben Sie Ihren API Token und den Netzwerk-Timeout an.
 Wählen Sie anschließend `WEITER` aus.  
 

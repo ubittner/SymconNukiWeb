@@ -28,18 +28,6 @@
       "type": "SelectCategory",
       "name": "CategoryID",
       "caption": "Category"
-    },
-    {
-      "type": "PopupAlert",
-      "popup": {
-        "closeCaption": "OK",
-        "items": [
-          {
-            "type": "Label",
-            "caption": "Currently only the Nuki Opener is supported!"
-          }
-        ]
-      }
     }
   ],
   "actions": [

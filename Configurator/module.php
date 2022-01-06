@@ -123,20 +123,18 @@ class NukiConfiguratorWebAPI extends IPSModule
                             'DeviceType'         => $deviceType,
                             'ProductDesignation' => 'Smart Lock',
                             'name'               => $name,
-                            'instanceID'         => $instanceID
-                            /*
-                            'create' => [
-                                'moduleID' => "{48C163A9-C871-88EB-2717-26A195E3E476}",
-                                'name' => $name,
+                            'instanceID'         => $instanceID,
+                            'create'             => [
+                                'moduleID'      => '{48C163A9-C871-88EB-2717-26A195E3E476}',
+                                'name'          => $name,
                                 'configuration' => [
                                     'SmartLockID'  => (string) $smartLockID,
-                                    'AccountID' => (string) $accountID,
-                                    'AuthID' => (string) $authID,
-                                    'Name' => (string) $name
+                                    'AccountID'    => (string) $accountID,
+                                    'AuthID'       => (string) $authID,
+                                    'Name'         => (string) $name
                                 ],
                                 'location' => $location
                             ]
-                             */
                         ];
                         break;
 
@@ -246,8 +244,11 @@ class NukiConfiguratorWebAPI extends IPSModule
         }
         $instanceIDs = IPS_GetInstanceListByModuleID($moduleID);
         foreach ($instanceIDs as $id) {
-            if (IPS_GetProperty($id, $propertyName) == $DeviceUID) {
-                $instanceID = $id;
+            $currentStatus = @IPS_GetInstance($id)['InstanceStatus'];
+            if ($currentStatus == 102) {
+                if (IPS_GetProperty($id, $propertyName) == $DeviceUID) {
+                    $instanceID = $id;
+                }
             }
         }
         return $instanceID;
