@@ -37,7 +37,7 @@ Der Nutzer stimmt den o.a. Bedingungen, sowie den Lizenzbedingungen ausdrücklic
 ### 3. Software-Installation
 
 * Bei kommerzieller Nutzung (z.B. als Einrichter oder Integrator) wenden Sie sich bitte zunächst an den Autor.
-* Über das Module Control folgende URL hinzufügen `https://github.com/ubittner/SymconNukiWeb`
+* Über das Module Control folgende URL hinzufügen: `https://github.com/ubittner/SymconNukiWeb`
 * Über den Module Store das 'Nuki Web'-Modul, sofern bereits im Module Store vorhanden, installieren.
 
 ### 4. Einrichten der Instanzen in IP-Symcon
