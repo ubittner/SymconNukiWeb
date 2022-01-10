@@ -62,15 +62,17 @@
     {
       "type": "NumberSpinner",
       "name": "ActivityLogPeriodLastDays",
-      "caption": "Period (last days)",
-      "minimum": 0
+      "caption": "Activity period (last days)",
+      "minimum": 0,
+      "suffix": "days"
     },
     {
       "type": "NumberSpinner",
       "name": "ActivityLogMaximumEntries",
-      "caption": "Number of maximum entries",
+      "caption": "Number of maximum activity entries",
       "minimum": 1,
-      "maximum": 50
+      "maximum": 50,
+      "suffix": "entries"
     }
   ],
   "actions": [
@@ -112,6 +114,13 @@
               "onClick": "$log=NUKIOW_GetActivityLog($id, false); print_r(json_decode($log, true));"
             }
           ]
+        },
+        {
+          "type": "Label",
+          "caption": " "
+        },
+        {
+          "type": "TestCenter"
         }
       ]
     }

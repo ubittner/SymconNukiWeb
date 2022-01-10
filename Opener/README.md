@@ -4,7 +4,7 @@
 
 [![Image](../imgs/NUKI_Opener.png)]()  
 
-Dieses Modul integriert den [NUKI Opener](https://nuki.io/de/opener) in [IP-Symcon](https://www.symcon.de) mittels Nuki Web API.  
+Dieses Modul integriert den [NUKI Opener](https://nuki.io/de/opener) in [IP-Symcon](https://www.symcon.de) mittels der [Nuki Web API](https://developer.nuki.io/t/nuki-web-api/25).  
 In Verbindung mit einer NUKI Bridge macht der Nuki Opener aus deiner bestehenden Gegensprechanlage einen smarten Türöffner.  
 
 Für dieses Modul besteht kein Anspruch auf Fehlerfreiheit, Weiterentwicklung, sonstige Unterstützung oder Support.  
@@ -34,19 +34,22 @@ Der Nutzer stimmt den o.a. Bedingungen, sowie den Lizenzbedingungen ausdrücklic
 
 ### 2. Voraussetzungen
 
-- IP-Symcon ab Version 5.5
-- Nuki Splitter Web API
+- IP-Symcon ab Version 6.0
 - Nuki Opener
+- Nuki Bridge
+- [Nuki Web Zugang](https://web.nuki.io/#/login)
+- [Nuki Splitter Web API](../Splitter) Instanz inkl. API Token
 
 ### 3. Software-Installation
 
 * Bei kommerzieller Nutzung (z.B. als Einrichter oder Integrator) wenden Sie sich bitte zunächst an den Autor.
-* Über das Module Control folgende URL hinzufügen `https://github.com/ubittner/SymconNukiWeb`
+* Über das Module Control folgende URL hinzufügen: `https://github.com/ubittner/SymconNukiWeb`
+* Über den Module Store das 'Nuki Web'-Modul, sofern bereits im Module Store vorhanden, installieren.
 
 ### 4. Einrichten der Instanzen in IP-Symcon
 
- Unter 'Instanz hinzufügen' kann das 'Nuki Opener Web API'-Modul mithilfe des Schnellfilters gefunden werden.  
-	- Weitere Informationen zum Hinzufügen von Instanzen in der [Dokumentation der Instanzen](https://www.symcon.de/service/dokumentation/konzepte/instanzen/#Instanz_hinzufügen)
+Unter 'Instanz hinzufügen' kann das 'Nuki Opener Web API'-Modul mithilfe des Schnellfilters gefunden werden.
+- Weitere Informationen zum Hinzufügen von Instanzen in der [Dokumentation der Instanzen](https://www.symcon.de/service/dokumentation/konzepte/instanzen/#Instanz_hinzufügen)
 
 __Konfigurationsseite__:
 
@@ -55,7 +58,6 @@ Name                            | Beschreibung
 Smart Lock ID                   | ID des Openers
 Account ID                      | ID des Benutzerkontos
 Auth ID                         | Authorisierungs ID
-Type                            | Gerätetyp 2 = Opener
 Name                            | Name des Gerätes
 Aktualisierungsintervall        | Intervall zur Aktualisierung
 Protokoll verwenden             | Protokoll verwenden
@@ -90,6 +92,8 @@ ActivityLog                     | string  | Protokoll
 
 #### Profile
 
+NUKIOW.InstanzID.Name
+
 Name                | Typ
 ------------------- | -------
 Door                | integer
@@ -101,6 +105,8 @@ SoundOpenViaApp     | integer
 SoundRingToOpen     | integer
 SoundContinuousMode | integer
 Volume              | integer
+
+Wird die NUKI Smart Lock Instanz gelöscht, so werden automatisch die oben aufgeführten Profile gelöscht.
 
 ### 6. WebFront
 
@@ -115,36 +121,6 @@ Die Funktionalität, die das Modul im WebFront bietet.
 * Protokoll
 
 ### 7. PHP-Befehlsreferenz
-
-```text
-Protokoll des Nuki Openers abrufen
-
-NUKIOW_GetActivityLog(integer $InstanceID, bool $Update);
-Liefert als Rückgabewert das Protokoll als String des Nuki Openers.
-
-Es gelten die Einschränkungen der Instanzkonfiguration (Zeitraum letzte Tage / Anzahl der maximalen Einträge)
-
-$Update = false;	//ruft nur die Daten ab
-$Update = true;		//aktualisiert das Protokoll im WebFront
-
-Beispiel:
-
-$log = NUKIOW_GetActivityLog(12345, true);
-```
-
-```text
-Konfiguration des Nuki Openers abrufen
-
-NUKIOW_GetOpenerData(integer $InstanceID, bool $Update);
-Liefert als Rückgabewert einen json kodierten String mit den Konfigurationsdaten des Nuki Openers.
-
-$Update = false;	//ruft nur die Daten ab
-$Update = true;		//aktualisiert die Einstellungen im WebFront
-
-Beispiel:
-
-$data = NUKIOW_GetOpenerData(12345, true);
-```
 
 ```text
 Tür öffnen
@@ -196,4 +172,34 @@ Fragt die Daten des Nuki Openers ab und aktualisiert die Instanz.
 Beispiel:
 
 $data = NUKIOW_UpdateData(12345);
+```
+
+```text
+Protokoll des Nuki Openers abrufen
+
+NUKIOW_GetActivityLog(integer $InstanceID, bool $Update);
+Liefert als Rückgabewert das Protokoll als String des Nuki Openers.
+
+Es gelten die Einschränkungen der Instanzkonfiguration (Zeitraum letzte Tage / Anzahl der maximalen Einträge)
+
+$Update = false;	//ruft nur die Daten ab
+$Update = true;		//aktualisiert das Protokoll im WebFront
+
+Beispiel:
+
+$log = NUKIOW_GetActivityLog(12345, true);
+```
+
+```text
+Konfiguration des Nuki Openers abrufen
+
+NUKIOW_GetOpenerData(integer $InstanceID, bool $Update);
+Liefert als Rückgabewert einen json kodierten String mit den Konfigurationsdaten des Nuki Openers.
+
+$Update = false;	//ruft nur die Daten ab
+$Update = true;		//aktualisiert die Einstellungen im WebFront
+
+Beispiel:
+
+$data = NUKIOW_GetOpenerData(12345, true);
 ```
