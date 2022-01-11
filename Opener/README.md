@@ -74,7 +74,7 @@ Name                            | Typ     | Beschreibung
 ------------------------------- | ------- | ----------------------------------------------------
 Door                            | integer | Öffnet die Tür
 DeviceState                     | integer | Status des Openers
-BatteryState                    | integer | Batteriestatus
+BatteryState                    | boolean | Batteriestatus
 RingToOpen                      | boolean | Ring To Open ein- / ausschalten
 RingToOpenTimeout               | integer | Dauer Ring To Open
 OneTimeAccess                   | boolean | Einmal-Zutritt
@@ -98,7 +98,7 @@ Name                | Typ
 ------------------- | -------
 Door                | integer
 DeviceState         | integer  
-BatteryState        | integer
+BatteryState        | boolean
 RingToOpenTimeout   | integer
 SoundDoorbellRings  | integer
 SoundOpenViaApp     | integer

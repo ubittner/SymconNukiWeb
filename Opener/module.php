@@ -64,13 +64,12 @@ class NukiOpenerWebAPI extends IPSModule
         //Battery state
         $profile = self::MODULE_PREFIX . '.' . $this->InstanceID . '.BatteryState';
         if (!IPS_VariableProfileExists($profile)) {
-            IPS_CreateVariableProfile($profile, 1);
+            IPS_CreateVariableProfile($profile, 0);
         }
         IPS_SetVariableProfileIcon($profile, 'Battery');
-        IPS_SetVariableProfileAssociation($profile, 0, 'OK', '', 0x00FF00);
-        IPS_SetVariableProfileAssociation($profile, 1, $this->Translate('Low battery'), '', 0xFF0000);
-        IPS_SetVariableProfileAssociation($profile, 2, $this->Translate('Unknown'), '', -1);
-        $this->RegisterVariableInteger('BatteryState', $this->Translate('Battery state'), $profile, 110);
+        IPS_SetVariableProfileAssociation($profile, false, 'OK', '', 0x00FF00);
+        IPS_SetVariableProfileAssociation($profile, true, $this->Translate('Low battery'), '', 0xFF0000);
+        $this->RegisterVariableBoolean('BatteryState', $this->Translate('Battery state'), $profile, 110);
 
         ##### Ring to Open
 
@@ -118,7 +117,7 @@ class NukiOpenerWebAPI extends IPSModule
 
         //Ring suppression ring
         $id = @$this->GetIDForIdent('RingSuppressionRing');
-        $this->RegisterVariableBoolean('RingSuppressionRing', $this->Translate('Ring'), '~Switch', 300);
+        $this->RegisterVariableBoolean('RingSuppressionRing', $this->Translate('Ring suppression Ring'), '~Switch', 300);
         $this->EnableAction('RingSuppressionRing');
         if ($id == false) {
             IPS_SetIcon($this->GetIDForIdent('RingSuppressionRing'), 'Alert');
@@ -126,7 +125,7 @@ class NukiOpenerWebAPI extends IPSModule
 
         //Ring suppression ring to open
         $id = @$this->GetIDForIdent('RingSuppressionRingToOpen');
-        $this->RegisterVariableBoolean('RingSuppressionRingToOpen', $this->Translate('Ring to Open'), '~Switch', 310);
+        $this->RegisterVariableBoolean('RingSuppressionRingToOpen', $this->Translate('Ring suppression Ring to Open'), '~Switch', 310);
         $this->EnableAction('RingSuppressionRingToOpen');
         if ($id == false) {
             IPS_SetIcon($this->GetIDForIdent('RingSuppressionRingToOpen'), 'Alert');
@@ -134,7 +133,7 @@ class NukiOpenerWebAPI extends IPSModule
 
         //Ring suppression continous mode
         $id = @$this->GetIDForIdent('RingSuppressionContinuousMode');
-        $this->RegisterVariableBoolean('RingSuppressionContinuousMode', $this->Translate('Continuous mode'), '~Switch', 320);
+        $this->RegisterVariableBoolean('RingSuppressionContinuousMode', $this->Translate('Ring suppression continuous mode'), '~Switch', 320);
         $this->EnableAction('RingSuppressionContinuousMode');
         if ($id == false) {
             IPS_SetIcon($this->GetIDForIdent('RingSuppressionContinuousMode'), 'Alert');
@@ -152,7 +151,7 @@ class NukiOpenerWebAPI extends IPSModule
         IPS_SetVariableProfileAssociation($profile, 1, 'Sound 1', '', 0xFF0000);
         IPS_SetVariableProfileAssociation($profile, 2, 'Sound 2', '', 0x00FF00);
         IPS_SetVariableProfileAssociation($profile, 3, 'Sound 3', '', 0x0000FF);
-        $this->RegisterVariableInteger('SoundDoorbellRings', $this->Translate('Doorbell rings'), $profile, 400);
+        $this->RegisterVariableInteger('SoundDoorbellRings', $this->Translate('Sound doorbell rings'), $profile, 400);
         $this->EnableAction('SoundDoorbellRings');
 
         //Sound open via app
@@ -165,7 +164,7 @@ class NukiOpenerWebAPI extends IPSModule
         IPS_SetVariableProfileAssociation($profile, 1, 'Sound 1', '', 0xFF0000);
         IPS_SetVariableProfileAssociation($profile, 2, 'Sound 2', '', 0x00FF00);
         IPS_SetVariableProfileAssociation($profile, 3, 'Sound 3', '', 0x0000FF);
-        $this->RegisterVariableInteger('SoundOpenViaApp', $this->Translate('Open via app'), $profile, 410);
+        $this->RegisterVariableInteger('SoundOpenViaApp', $this->Translate('Sound open via app'), $profile, 410);
         $this->EnableAction('SoundOpenViaApp');
 
         //Sound ring to open
@@ -178,7 +177,7 @@ class NukiOpenerWebAPI extends IPSModule
         IPS_SetVariableProfileAssociation($profile, 1, 'Sound 1', '', 0xFF0000);
         IPS_SetVariableProfileAssociation($profile, 2, 'Sound 2', '', 0x00FF00);
         IPS_SetVariableProfileAssociation($profile, 3, 'Sound 3', '', 0x0000FF);
-        $this->RegisterVariableInteger('SoundRingToOpen', $this->Translate('Ring to Open'), $profile, 420);
+        $this->RegisterVariableInteger('SoundRingToOpen', $this->Translate('Sound Ring to Open'), $profile, 420);
         $this->EnableAction('SoundRingToOpen');
 
         //Sound continuous mode
@@ -191,7 +190,7 @@ class NukiOpenerWebAPI extends IPSModule
         IPS_SetVariableProfileAssociation($profile, 1, 'Sound 1', '', 0xFF0000);
         IPS_SetVariableProfileAssociation($profile, 2, 'Sound 2', '', 0x00FF00);
         IPS_SetVariableProfileAssociation($profile, 3, 'Sound 3', '', 0x0000FF);
-        $this->RegisterVariableInteger('SoundContinuousMode', $this->Translate('Continuous mode'), $profile, 430);
+        $this->RegisterVariableInteger('SoundContinuousMode', $this->Translate('Sound continuous mode'), $profile, 430);
         $this->EnableAction('SoundContinuousMode');
 
         //Volume slider
@@ -365,7 +364,7 @@ class NukiOpenerWebAPI extends IPSModule
                 $ringToOpenState = false;
                 $continousModeState = false;
                 $deviceState = 0;
-                $batteryState = 2;
+                $batteryState = false;
                 if (array_key_exists('state', $openerData)) {
                     if (array_key_exists('state', $openerData['state'])) {
                         $deviceState = $openerData['state']['state'];
@@ -380,7 +379,7 @@ class NukiOpenerWebAPI extends IPSModule
                         }
                     }
                     if (array_key_exists('batteryCritical', $openerData['state'])) {
-                        $batteryState = $openerData['state']['batteryCritical'];
+                        $batteryState = (bool) $openerData['state']['batteryCritical'];
                     }
                 }
                 $this->SetValue('DeviceState', $deviceState);
