@@ -4,9 +4,9 @@
   "name": "Nuki Web",
   "url": "https://nuki.io/de/",
   "compatibility": {
-    "version": "5.5"
+    "version": "6.0"
   },
   "version": "1.0",
-  "build": 6,
-  "date": 1640014091
+  "build": 7,
+  "date": 1641888061
 }
