@@ -38,11 +38,12 @@ Der Nutzer stimmt den o.a. Bedingungen, sowie den Lizenzbedingungen ausdrücklic
 
 * Bei kommerzieller Nutzung (z.B. als Einrichter oder Integrator) wenden Sie sich bitte zunächst an den Autor.
 * Über das Module Control folgende URL hinzufügen: `https://github.com/ubittner/SymconNukiWeb`
-* Über den Module Store das 'Nuki Web'-Modul, sofern bereits im Module Store vorhanden, installieren.
+* Über den Module Store das `Nuki Web`-Modul, sofern bereits im Module Store vorhanden, installieren.
 
 ### 4. Einrichten der Instanzen in IP-Symcon
 
-- In IP-Symcon an beliebiger Stelle `Instanz hinzufügen` auswählen und `Nuki Konfigurator Web API` auswählen, welches unter dem Hersteller `NUKI` aufgeführt ist. Es wird eine Nuki Konfigurator Web API Instanz unter der Kategorie `Konfigurator Instanzen` angelegt.  
+- In IP-Symcon an beliebiger Stelle `Instanz hinzufügen` auswählen und `Nuki Konfigurator Web API` auswählen, welches unter dem Hersteller `NUKI` aufgeführt ist.  
+- Es wird eine Nuki Konfigurator Web API Instanz unter der Kategorie `Konfigurator Instanzen` angelegt.  
 
 __Konfigurationsseite__:
 
@@ -61,16 +62,18 @@ Erstellen       | Erstellt für das ausgewählte Nuki Gerät eine Instanz
 __Vorgehensweise__:
 
 Über die Schaltfläche `AKTUALISIEREN` können Sie im Nuki Konfigurator Web API die Liste der verfügbaren Nuki Geräte jederzeit aktualisieren.  
-Wählen Sie `ALLE ERSTELLEN` oder wählen Sie ein Nuki Gerät aus der Liste aus und drücken dann die Schaltfläche `ERSTELLEN`, um das Nuki Gerät automatisch anzulegen.
+Wählen Sie `ALLE ERSTELLEN` oder wählen Sie ein Nuki Gerät aus der Liste aus und drücken dann die Schaltfläche `ERSTELLEN`, um das Nuki Gerät automatisch anzulegen.  
 Sofern noch keine [Nuki Splitter Web API](../Splitter) Instanz angelegt wurde, muss einmalig beim Erstellen der Nuki Konfigurator Web API Instanz die Konfiguration der Nuki Splitter Web API Instanz vorgenommen werden.  
-Geben Sie Ihren API Token und den Netzwerk-Timeout an.
+Geben Sie Ihren API Token und den Netzwerk-Timeout an.  
 Wählen Sie anschließend `WEITER` aus.  
 
-Sofern Sie mehrere Nuki Splitter Web API Instanzen verwenden, können Sie in der Instanzkonfiguration unter `GATEWAY ÄNDERN` die entsprechende Nuki Splitter Web API Instanz auswählen. Die Nuki Splitter Web API Instanz muss dafür bereits vorhanden sein.  
+Sofern Sie mehrere Nuki Splitter Web API Instanzen verwenden, können Sie in der Instanzkonfiguration unter `GATEWAY ÄNDERN` die entsprechende Nuki Splitter Web API Instanz auswählen.  
+Die Nuki Splitter Web API Instanz muss dafür bereits vorhanden sein.  
 
 ### 5. Statusvariablen und Profile
 
-Die Statusvariablen/Kategorien werden automatisch angelegt. Das Löschen einzelner kann zu Fehlfunktionen führen.
+Die Statusvariablen/Kategorien werden automatisch angelegt.  
+Das Löschen einzelner kann zu Fehlfunktionen führen.
 
 ##### Statusvariablen
 

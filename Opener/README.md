@@ -27,10 +27,10 @@ Der Nutzer stimmt den o.a. Bedingungen, sowie den Lizenzbedingungen ausdrücklic
 * Tür öffnen
 * Ring to Open ein- / ausschalten
 * Klingelunterdrückung ein- / ausschalten
-* Sounds
-* Lautstärke verändern
-* LED
-* Protokoll
+* Sounds einstellen
+* Lautstärke ändern
+* LED-Signal ein- / ausschalten
+* Protokoll anzeigen
 
 ### 2. Voraussetzungen
 
@@ -44,11 +44,11 @@ Der Nutzer stimmt den o.a. Bedingungen, sowie den Lizenzbedingungen ausdrücklic
 
 * Bei kommerzieller Nutzung (z.B. als Einrichter oder Integrator) wenden Sie sich bitte zunächst an den Autor.
 * Über das Module Control folgende URL hinzufügen: `https://github.com/ubittner/SymconNukiWeb`
-* Über den Module Store das 'Nuki Web'-Modul, sofern bereits im Module Store vorhanden, installieren.
+* Über den Module Store das `Nuki Web`-Modul, sofern bereits im Module Store vorhanden, installieren.
 
 ### 4. Einrichten der Instanzen in IP-Symcon
 
-Unter 'Instanz hinzufügen' kann das 'Nuki Opener Web API'-Modul mithilfe des Schnellfilters gefunden werden.
+- Unter `Instanz hinzufügen` kann das `Nuki Opener Web API`-Modul mithilfe des Schnellfilters gefunden werden.  
 - Weitere Informationen zum Hinzufügen von Instanzen in der [Dokumentation der Instanzen](https://www.symcon.de/service/dokumentation/konzepte/instanzen/#Instanz_hinzufügen)
 
 __Konfigurationsseite__:
@@ -66,7 +66,8 @@ Anzahl der maximalen Einträge   | Anzahl der maximalen Einträge
 
 ### 5. Statusvariablen und Profile
 
-Die Statusvariablen/Kategorien werden automatisch angelegt. Das Löschen einzelner kann zu Fehlfunktionen führen.
+Die Statusvariablen/Kategorien werden automatisch angelegt.  
+Das Löschen einzelner kann zu Fehlfunktionen führen.
 
 #### Statusvariablen
 
@@ -116,90 +117,92 @@ Die Funktionalität, die das Modul im WebFront bietet.
 * Ring to Open ein- / ausschalten
 * Klingelunterdrückung ein- / ausschalten
 * Sounds einstellen
-* Lautstärke verändern
-* LED ein- / ausschalten
-* Protokoll
+* Lautstärke ändern
+* LED-Signal ein- / ausschalten
+* Protokoll anzeigen
 
 ### 7. PHP-Befehlsreferenz
 
 ```text
 Tür öffnen
 
-NUKIOW_OpenDoor(integer $InstanceID);
+NUKIOW_OpenDoor(integer $InstanzID);
 Liefert keinen Rückgabewert.
 
 Beispiel:
 
-$data = NUKIOW_OpenDoor(12345);
+NUKIOW_OpenDoor(12345);
 ```
 
 ```text
 Dauermodus ein- / ausschalten
 
-NUKIOW_ToggleContinuousMode(integer $InstanceID, bool $State);
+NUKIOW_ToggleContinuousMode(integer $InstanzID, bool $Status);
 Liefert keinen Rückgabewert.
 
-$State = false;		//ausschalten
-$State = true; 		//einschalten
+$Status = false;		//ausschalten
+$Status = true; 		//einschalten
 
 Beispiel:
 
-$data = NUKIOW_ToggleContinuousMode(12345, true);
+NUKIOW_ToggleContinuousMode(12345, true);
 ```
 
 ```text
 Ring To Open ein- / ausschalten
 
-NUKIOW_ToggleRingToOpen(integer $InstanceID, bool $State);
+NUKIOW_ToggleRingToOpen(integer $InstanzID, bool $Status);
 Liefert keinen Rückgabewert.
 
-$State = false;		//ausschalten
-$State = true; 		//einschalten
+$Status = false;		//ausschalten
+$Status = true; 		//einschalten
 
 Beispiel:
 
-$data = NUKIOW_ToggleRingToOpen(12345, true);
+NUKIOW_ToggleRingToOpen(12345, true);
 ```
 
 ```text
 Daten aktualisieren
 
-NUKIOW_UpdateData(integer $InstanceID);
+NUKIOW_UpdateData(integer $InstanzID);
 Liefert keinen Rückgabewert.
 
 Fragt die Daten des Nuki Openers ab und aktualisiert die Instanz.
 
 Beispiel:
 
-$data = NUKIOW_UpdateData(12345);
+NUKIOW_UpdateData(12345);
 ```
 
 ```text
 Protokoll des Nuki Openers abrufen
 
-NUKIOW_GetActivityLog(integer $InstanceID, bool $Update);
-Liefert als Rückgabewert das Protokoll als String des Nuki Openers.
+NUKIOW_GetActivityLog(integer $InstanzID, bool $Aktualisierung);
+Liefert als Rückgabewert das Protokoll des Nuki Openers als json kodierten String.
 
 Es gelten die Einschränkungen der Instanzkonfiguration (Zeitraum letzte Tage / Anzahl der maximalen Einträge)
 
-$Update = false;	//ruft nur die Daten ab
-$Update = true;		//aktualisiert das Protokoll im WebFront
+$Aktualisierung = false;	//ruft nur die Daten ab
+$Aktualisierung = true;		//aktualisiert das Protokoll im WebFront
 
 Beispiel:
 
 $log = NUKIOW_GetActivityLog(12345, true);
+print_r(json_decode($log, true));  //Ausgabe der Daten als Array
 ```
 
 ```text
 Konfiguration des Nuki Openers abrufen
 
-NUKIOW_GetOpenerData(integer $InstanceID, bool $Update);
+NUKIOW_GetOpenerData(integer $InstanzID, bool $Aktualisierung);
 Liefert als Rückgabewert einen json kodierten String mit den Konfigurationsdaten des Nuki Openers.
 
-$Update = false;	//ruft nur die Daten ab
-$Update = true;		//aktualisiert die Einstellungen im WebFront
+$Aktualisierung = false;	//ruft nur die Daten ab
+$Aktualisierung = true;		//aktualisiert die Einstellungen im WebFront
 
 Beispiel:
 
 $data = NUKIOW_GetOpenerData(12345, true);
+print_r(json_decode($data, true));  //Ausgabe der Daten als Array
 ```

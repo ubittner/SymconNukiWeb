@@ -2,7 +2,7 @@
 
 [![Image](../imgs/NUKI_Logo.png)](https://nuki.io/de/)
 
-Dieses Modul stellt die Kommunikation mit der Nuki Web API her.
+Dieses Modul stellt die Kommunikation mit der [Nuki Web API](https://developer.nuki.io/t/nuki-web-api/25) her.
 
 Für dieses Modul besteht kein Anspruch auf Fehlerfreiheit, Weiterentwicklung, sonstige Unterstützung oder Support.  
 Bevor das Modul installiert wird, sollte unbedingt ein Backup von IP-Symcon durchgeführt werden.  
@@ -21,25 +21,28 @@ Der Nutzer stimmt den o.a. Bedingungen, sowie den Lizenzbedingungen ausdrücklic
 
 ### 1. Funktionsumfang
 
-* Kommunikation mit der Nuki Web API
+* Kommunikation mit der [Nuki Web API](https://developer.nuki.io/t/nuki-web-api/25)
 
 ### 2. Voraussetzungen
 
-- IP-Symcon ab Version 5.5
+- IP-Symcon ab Version 6.0
+- Nuki Smartlock 1.0, 2.0, 3.0 (Pro)
+- Nuki Opener
 - [Nuki Web Aktivierung](https://web.nuki.io/#/login)
 - Nuki Web API Token  
-  
+   
   [![Image](../imgs/NUKI_API_Token.png)](https://nuki.io/de/)
 
 ### 3. Software-Installation
 
 * Bei kommerzieller Nutzung (z.B. als Einrichter oder Integrator) wenden Sie sich bitte zunächst an den Autor.
-* Über das Module Control folgende URL hinzufügen `https://github.com/ubittner/SymconNukiWeb`
+* Über das Module Control folgende URL hinzufügen: `https://github.com/ubittner/SymconNukiWeb`
+* Über den Module Store das `Nuki Web`-Modul, sofern bereits im Module Store vorhanden, installieren.
 
 ### 4. Einrichten der Instanzen in IP-Symcon
 
- Unter 'Instanz hinzufügen' kann das 'Nuki Splitter Web API'-Modul mithilfe des Schnellfilters gefunden werden.  
-	- Weitere Informationen zum Hinzufügen von Instanzen in der [Dokumentation der Instanzen](https://www.symcon.de/service/dokumentation/konzepte/instanzen/#Instanz_hinzufügen)
+- Unter `Instanz hinzufügen` kann das `Nuki Splitter Web API`-Modul mithilfe des Schnellfilters gefunden werden.
+- Weitere Informationen zum Hinzufügen von Instanzen in der [Dokumentation der Instanzen](https://www.symcon.de/service/dokumentation/konzepte/instanzen/#Instanz_hinzufügen)
 
 __Konfigurationsseite__:
 
@@ -70,18 +73,19 @@ Die Splitter Instanz hat im WebFront keine Funktionalität.
 ```text
 Liste der Smart Locks (Geräte) abrufen
 
-NUKISW_GetSmartLocks(integer $InstanceID);
+NUKISW_GetSmartLocks(integer $InstanzID);
 Liefert als Rückgabewert einen json kodierten String mit Daten der vorhandenen Geräten.
 
 Beispiel:
 
 $devices = NUKISW_GetSmartLocks(12345);
+print_r(json_decode($devices, true));  //Ausgabe der Daten als Array
 ```
 
 ```text
 Aktualisiert eine Smart Lock (Geräte) Konfiguration.
 
-NUKISW_UpdateSmartLockConfig(integer $InstanceID, string $SmartLockID, string $Config);
+NUKISW_UpdateSmartLockConfig(integer $InstanzID, string $SmartLockID, string $Konfiguration);
 Liefert als Rückgabewert einen json kodierten String mit dem HTTP Code.
 
 $config = '{
@@ -114,51 +118,51 @@ $config = '{
 
 Beispiel:
 
-$config = NUKISW_UpdateSmartLockConfig(12345, '987654321', $config);
+$updateConfig = NUKISW_UpdateSmartLockConfig(12345, '987654321', $config);
 ```
 
 ```text
 Aktualisiert die erweiterte Konfiguration eines Nuki Openers
 
-NUKISW_UpdateOpenerAdvancedConfig(integer $InstanceID, string $SmartLockID, string $AdvancedConfig);
+NUKISW_UpdateOpenerAdvancedConfig(integer $InstanzID, string $SmartLockID, string $ErweiterteKonfiguration);
 Liefert als Rückgabewert einen json kodierten String mit dem HTTP Code.
 
 Beispiel:
 
-$config = '{
-            "intercomId":0,
-            "busModeSwitch":0,
-            "shortCircuitDuration":0,
-            "electricStrikeDelay":0,
-            "randomElectricStrikeDelay":false,
-            "electricStrikeDuration":3000,
-            "disableRtoAfterRing":true,
-            "rtoTimeout":20,
-            "doorbellSuppression":0,
-            "doorbellSuppressionDuration":500,
-            "soundRing":0,
-            "soundOpen":0,
-            "soundRto":0,
-            "soundCm":0,
-            "soundConfirmation":1,
-            "soundLevel":0,
-            "singleButtonPressAction":1,
-            "doubleButtonPressAction":4,
-            "batteryType":0,
-            "automaticBatteryTypeDetection":false,
-            "autoUpdateEnabled":true
-           }';
+$advancedConfig = '{
+                    "intercomId":0,
+                    "busModeSwitch":0,
+                    "shortCircuitDuration":0,
+                    "electricStrikeDelay":0,
+                    "randomElectricStrikeDelay":false,
+                    "electricStrikeDuration":3000,
+                    "disableRtoAfterRing":true,
+                    "rtoTimeout":20,
+                    "doorbellSuppression":0,
+                    "doorbellSuppressionDuration":500,
+                    "soundRing":0,
+                    "soundOpen":0,
+                    "soundRto":0,
+                    "soundCm":0,
+                    "soundConfirmation":1,
+                    "soundLevel":0,
+                    "singleButtonPressAction":1,
+                    "doubleButtonPressAction":4,
+                    "batteryType":0,
+                    "automaticBatteryTypeDetection":false,
+                    "autoUpdateEnabled":true
+                   }';
            
-$advancedConfig = NUKISW_UpdateOpenerAdvancedConfig(12345, '987654321', $advancedConfig);
+$updateAdvancedConfig = NUKISW_UpdateOpenerAdvancedConfig(12345, '987654321', $advancedConfig);
 ```
 
 ```text
 Sperren und Entsperren eines Smart Locks (Gerätes) mit Optionen
 
-NUKISW_SetSmartLockAction(integer $InstanceID, string $SmartLockID, int $Action, int $Option);
+NUKISW_SetSmartLockAction(integer $InstanzID, string $SmartLockID, int $Aktion, int $Option);
 Liefert als Rückgabewert einen json kodierten String mit dem HTTP Code.
 
-$Action:
+$Aktion:
 Nuki Smart Lock:    1 unlock
                     2 lock
                     3 unlatch
@@ -177,13 +181,13 @@ $Option:            0 none
                     
 Beispiel:
 
-$devices = NUKISW_SetSmartLockAction(12345, '987654321', 3, 0);
+$action = NUKISW_SetSmartLockAction(12345, '987654321', 3, 0);
 ```
 
 ```text
 Eine Protokoll-Liste von einem Smart Lock (Gerät) erhalten
 
-NUKISW_GetSmartLockLog(integer $InstanceID, string $SmartLockID, string $Parameter);
+NUKISW_GetSmartLockLog(integer $InstanzID, string $SmartLockID, string $Parameter);
 Liefert als Rückgabewert einen json kodierten String mit den Daten.
 
 $Parameter = 'fromDate=' . $datetime . '&limit=' . $limit;
@@ -191,4 +195,5 @@ $Parameter = 'fromDate=' . $datetime . '&limit=' . $limit;
 Beispiel:
 
 $log = NUKISW_GetSmartLockLog(12345, '987654321', $Parameter);
+print_r(json_decode($log, true));  //Ausgabe der Daten als Array
 ```
