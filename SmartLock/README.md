@@ -38,13 +38,12 @@ Der Nutzer stimmt den o.a. Bedingungen, sowie den Lizenzbedingungen ausdrücklic
 - Nuki Smart Lock 1.0, 2.0, 3.0 (Pro)
 - Nuki Bridge
 - [Nuki Web Zugang](https://web.nuki.io/#/login)
-- [Nuki Splitter Web API](../Splitter) Instanz inkl. API Token
+- [Nuki Splitter Web API](../Splitter)  
 
 ### 3. Software-Installation
 
 * Bei kommerzieller Nutzung (z.B. als Einrichter oder Integrator) wenden Sie sich bitte zunächst an den Autor.
-* Über das Module Control folgende URL hinzufügen: `https://github.com/ubittner/SymconNukiWeb`
-* Über den Module Store das `Nuki Web`-Modul, sofern bereits im Module Store vorhanden, installieren.
+* Über den Module Store das `Nuki Web`-Modul installieren.
 
 ### 4. Einrichten der Instanzen in IP-Symcon
 
@@ -59,7 +58,8 @@ Smart Lock ID                           | ID des Smart Locks
 Account ID                              | ID des Benutzerkontos
 Auth ID                                 | Authorisierungs ID
 Name                                    | Name des Gerätes
-Aktualisierungsintervall                | Intervall zur Aktualisierung
+Status automatisch aktualisieren        | Status automatisch aktualisieren
+Alternativer Aktualisierungsintervall   | Intervall zur alternativen Aktualisierung
 Türsensor                               | Türsensor Informationen anzeigen
 Keypad                                  | Keypad Informationen anzeigen
 Protokoll                               | Protokoll anzeigen
@@ -145,7 +145,7 @@ Daten aktualisieren
 NUKISLW_UpdateData(integer $InstanzID);
 Liefert keinen Rückgabewert.
 
-Fragt die Daten des Nuki Smart Locks ab und aktualisiert die Instanz.
+Fragt die Daten des Nuki Smart Locks ab und aktualisiert die Daten der Instanz.
 
 Beispiel:
 

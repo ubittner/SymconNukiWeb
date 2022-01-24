@@ -38,13 +38,12 @@ Der Nutzer stimmt den o.a. Bedingungen, sowie den Lizenzbedingungen ausdrücklic
 - Nuki Opener
 - Nuki Bridge
 - [Nuki Web Zugang](https://web.nuki.io/#/login)
-- [Nuki Splitter Web API](../Splitter) Instanz inkl. API Token
+- [Nuki Splitter Web API](../Splitter)
 
 ### 3. Software-Installation
 
 * Bei kommerzieller Nutzung (z.B. als Einrichter oder Integrator) wenden Sie sich bitte zunächst an den Autor.
-* Über das Module Control folgende URL hinzufügen: `https://github.com/ubittner/SymconNukiWeb`
-* Über den Module Store das `Nuki Web`-Modul, sofern bereits im Module Store vorhanden, installieren.
+* Über den Module Store das `Nuki Web`-Modul installieren.
 
 ### 4. Einrichten der Instanzen in IP-Symcon
 
@@ -53,16 +52,17 @@ Der Nutzer stimmt den o.a. Bedingungen, sowie den Lizenzbedingungen ausdrücklic
 
 __Konfigurationsseite__:
 
-Name                            | Beschreibung
-------------------------------- | ------------------
-Smart Lock ID                   | ID des Openers
-Account ID                      | ID des Benutzerkontos
-Auth ID                         | Authorisierungs ID
-Name                            | Name des Gerätes
-Aktualisierungsintervall        | Intervall zur Aktualisierung
-Protokoll verwenden             | Protokoll verwenden
-Zeitraum (letzte Tage)          | Zeitraum
-Anzahl der maximalen Einträge   | Anzahl der maximalen Einträge   
+Name                                    | Beschreibung
+--------------------------------------- | ------------------
+Smart Lock ID                           | ID des Openers
+Account ID                              | ID des Benutzerkontos
+Auth ID                                 | Authorisierungs ID
+Name                                    | Name des Gerätes
+Status automatisch aktualisieren        | Status automatisch aktualisieren
+Alternativer Aktualisierungsintervall   | Intervall zur alternativen Aktualisierung
+Protokoll verwenden                     | Protokoll verwenden
+Zeitraum (letzte Tage)                  | Zeitraum
+Anzahl der maximalen Einträge           | Anzahl der maximalen Einträge   
 
 ### 5. Statusvariablen und Profile
 
@@ -168,7 +168,7 @@ Daten aktualisieren
 NUKIOW_UpdateData(integer $InstanzID);
 Liefert keinen Rückgabewert.
 
-Fragt die Daten des Nuki Openers ab und aktualisiert die Instanz.
+Fragt die Daten des Nuki Openers ab und aktualisiert die daten der Instanz.
 
 Beispiel:
 

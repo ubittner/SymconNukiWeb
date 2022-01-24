@@ -29,15 +29,27 @@ Der Nutzer stimmt den o.a. Bedingungen, sowie den Lizenzbedingungen ausdrücklic
 - Nuki Smartlock 1.0, 2.0, 3.0 (Pro)
 - Nuki Opener
 - [Nuki Web Aktivierung](https://web.nuki.io/#/login)
-- Nuki Web API Token  
-   
-  [![Image](../imgs/NUKI_API_Token.png)](https://nuki.io/de/)
+
+Drücken Sie in der Instanzkonfiguration auf die Schaltfläche `Registrieren`  
+
+[![Image](../imgs/NUKI_Register.png)]()  
+
+Melden Sie sich bei Nuki Web an  
+
+[![Image](../imgs/NUKI_Login.png)]()  
+
+Bestätigen Sie den Hinweis  
+
+[![Image](../imgs/NUKI_Confirmation.png)]()  
+
+Die Instanz wurde erfolgreich registriert  
+
+[![Image](../imgs/NUKI_Connected.png)]()
 
 ### 3. Software-Installation
 
 * Bei kommerzieller Nutzung (z.B. als Einrichter oder Integrator) wenden Sie sich bitte zunächst an den Autor.
-* Über das Module Control folgende URL hinzufügen: `https://github.com/ubittner/SymconNukiWeb`
-* Über den Module Store das `Nuki Web`-Modul, sofern bereits im Module Store vorhanden, installieren.
+* Über den Module Store das `Nuki Web`-Modul installieren.
 
 ### 4. Einrichten der Instanzen in IP-Symcon
 
@@ -46,11 +58,11 @@ Der Nutzer stimmt den o.a. Bedingungen, sowie den Lizenzbedingungen ausdrücklic
 
 __Konfigurationsseite__:
 
-Name        | Beschreibung
------------ | ------------------
-Aktiv       | Schaltet den Splitter in- bzw. aktiv
-API Token   | API Token
-Timeout     | Netzwerk Timeout
+Name                    | Beschreibung
+----------------------- | ------------------
+Aktiv                   | Schaltet den Splitter in- bzw. aktiv
+Status aktualisieren    | Aktualisiert automatisch die Statusdaten der Geräte
+Timeout                 | Netzwerk Timeout
 
 ### 5. Statusvariablen und Profile
 
@@ -79,6 +91,18 @@ Liefert als Rückgabewert einen json kodierten String mit Daten der vorhandenen 
 Beispiel:
 
 $devices = NUKISW_GetSmartLocks(12345);
+print_r(json_decode($devices, true));  //Ausgabe der Daten als Array
+```
+
+```text
+Informationen eines bestimmten Smart Locks (Gerät) abrufen
+
+NUKISW_GetSmartLock(integer $InstanzID, string $SmartLockID);
+Liefert als Rückgabewert einen json kodierten String mit Daten des Gerätes.
+
+Beispiel:
+
+$devices = NUKISW_GetSmartLocks(12345, '9876543210');
 print_r(json_decode($devices, true));  //Ausgabe der Daten als Array
 ```
 
