@@ -2,10 +2,16 @@
   "translations": {
     "de": {
       "Active": "Aktiv",
-      "Please enter your API token": "Bitte geben Sie Ihren API Token an",
+      "Use automatic update": "Status automatisch aktualisieren",
       "milliseconds": "Millisekunden",
+      "Token: Not registered yet!" :"Token: Noch nicht registriert!",
+      "Register": "Registrieren",
       "Developer area": "Entwicklerbereich",
       "Show devices": "Geräte anzeigen",
+      "List Webhooks": "Webhooks anzeigen",
+      "Delete Webhook": "Webhook löschen",
+      "Do you really want to delete the Webhook?": "Wollen Sie wirklich den Webhook löschen?",
+      "Delete": "Löschen",
       "Nuki Splitter Web API will be created": "Nuki Splitter Web API wird erstellt",
       "Nuki Splitter Web API is active": "Nuki Splitter Web API ist aktiv",
       "Nuki Splitter Web API will be deleted": "Nuki Splitter Web API wird gelöscht",

@@ -100,120 +100,124 @@ class NukiConfiguratorWebAPI extends IPSModule
         $data['Buffer'] = $buffer;
         $data = json_encode($data);
         $result = json_decode($this->SendDataToParent($data), true);
-        $httpCode = $result['httpCode'];
-        $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
-        if ($httpCode != 200) {
-            $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 200!', 0);
-            return $values;
+        if (array_key_exists('httpCode', $result)) {
+            $httpCode = $result['httpCode'];
+            $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
+            if ($httpCode != 200) {
+                $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 200!', 0);
+                return $values;
+            }
         }
-        foreach (json_decode($result['body'], true) as $device) {
-            if (array_key_exists('type', $device)) {
-                $smartLockID = $device['smartlockId'];
-                $accountID = $device['accountId'];
-                $authID = $device['authId'];
-                $deviceType = $device['type'];
-                $name = $device['name'];
-                switch ($deviceType) {
-                    case 0: # Smart Lock
-                        $instanceID = $this->GetDeviceInstances($smartLockID, 0);
-                        $values[] = [
-                            'SmartLockID'        => $smartLockID,
-                            'AccountID'          => $accountID,
-                            'AuthID'             => $authID,
-                            'DeviceType'         => $deviceType,
-                            'ProductDesignation' => 'Smart Lock',
-                            'name'               => $name,
-                            'instanceID'         => $instanceID,
-                            'create'             => [
-                                'moduleID'      => '{48C163A9-C871-88EB-2717-26A195E3E476}',
-                                'name'          => $name,
-                                'configuration' => [
-                                    'SmartLockID'  => (string) $smartLockID,
-                                    'AccountID'    => (string) $accountID,
-                                    'AuthID'       => (string) $authID,
-                                    'Name'         => (string) $name
-                                ],
-                                'location' => $location
-                            ]
-                        ];
-                        break;
+        if (array_key_exists('body', $result)) {
+            foreach (json_decode($result['body'], true) as $device) {
+                if (array_key_exists('type', $device)) {
+                    $smartLockID = $device['smartlockId'];
+                    $accountID = $device['accountId'];
+                    $authID = $device['authId'];
+                    $deviceType = $device['type'];
+                    $name = $device['name'];
+                    switch ($deviceType) {
+                        case 0: # Smart Lock
+                            $instanceID = $this->GetDeviceInstances($smartLockID, 0);
+                            $values[] = [
+                                'SmartLockID'        => $smartLockID,
+                                'AccountID'          => $accountID,
+                                'AuthID'             => $authID,
+                                'DeviceType'         => $deviceType,
+                                'ProductDesignation' => 'Smart Lock',
+                                'name'               => $name,
+                                'instanceID'         => $instanceID,
+                                'create'             => [
+                                    'moduleID'      => '{48C163A9-C871-88EB-2717-26A195E3E476}',
+                                    'name'          => $name,
+                                    'configuration' => [
+                                        'SmartLockID' => (string) $smartLockID,
+                                        'AccountID'   => (string) $accountID,
+                                        'AuthID'      => (string) $authID,
+                                        'Name'        => (string) $name
+                                    ],
+                                    'location' => $location
+                                ]
+                            ];
+                            break;
 
-                    case 1: # Box
-                        $instanceID = $this->GetDeviceInstances($smartLockID, 1);
-                        $values[] = [
-                            'SmartLockID'        => $smartLockID,
-                            'AccountID'          => $accountID,
-                            'AuthID'             => $authID,
-                            'DeviceType'         => $deviceType,
-                            'ProductDesignation' => 'Box',
-                            'name'               => $name,
-                            'instanceID'         => $instanceID
-                            /*
-                            'create' => [
-                                'moduleID' => "{5C79FC64-46D3-1EF9-3C72-3137275CB34C}",
-                                'name' => $name,
-                                'configuration' => [
-                                    'SmartLockID'  => (string) $smartLockID,
-                                    'AccountID' => (string) $accountID,
-                                    'AuthID' => (string) $authID,
-                                    'Name' => (string) $name
-                                ],
-                                'location' => $location
-                            ]
-                             */
-                        ];
-                        break;
+                        case 1: # Box
+                            $instanceID = $this->GetDeviceInstances($smartLockID, 1);
+                            $values[] = [
+                                'SmartLockID'        => $smartLockID,
+                                'AccountID'          => $accountID,
+                                'AuthID'             => $authID,
+                                'DeviceType'         => $deviceType,
+                                'ProductDesignation' => 'Box',
+                                'name'               => $name,
+                                'instanceID'         => $instanceID
+                                /*
+                                'create' => [
+                                    'moduleID' => "{5C79FC64-46D3-1EF9-3C72-3137275CB34C}",
+                                    'name' => $name,
+                                    'configuration' => [
+                                        'SmartLockID'  => (string) $smartLockID,
+                                        'AccountID' => (string) $accountID,
+                                        'AuthID' => (string) $authID,
+                                        'Name' => (string) $name
+                                    ],
+                                    'location' => $location
+                                ]
+                                 */
+                            ];
+                            break;
 
-                    case 2: # Opener
-                        $instanceID = $this->GetDeviceInstances($smartLockID, 2);
-                        $values[] = [
-                            'SmartLockID'        => $smartLockID,
-                            'AccountID'          => $accountID,
-                            'AuthID'             => $authID,
-                            'DeviceType'         => $deviceType,
-                            'ProductDesignation' => 'Opener',
-                            'name'               => $name,
-                            'instanceID'         => $instanceID,
-                            'create'             => [
-                                'moduleID'      => '{41271F9F-1DB0-CB78-93BD-1361A6C5C058}',
-                                'name'          => $name,
-                                'configuration' => [
-                                    'SmartLockID' => (string) $smartLockID,
-                                    'AccountID'   => (string) $accountID,
-                                    'AuthID'      => (string) $authID,
-                                    'Name'        => (string) $name
-                                ],
-                                'location' => $location
-                            ]
-                        ];
-                        break;
+                        case 2: # Opener
+                            $instanceID = $this->GetDeviceInstances($smartLockID, 2);
+                            $values[] = [
+                                'SmartLockID'        => $smartLockID,
+                                'AccountID'          => $accountID,
+                                'AuthID'             => $authID,
+                                'DeviceType'         => $deviceType,
+                                'ProductDesignation' => 'Opener',
+                                'name'               => $name,
+                                'instanceID'         => $instanceID,
+                                'create'             => [
+                                    'moduleID'      => '{41271F9F-1DB0-CB78-93BD-1361A6C5C058}',
+                                    'name'          => $name,
+                                    'configuration' => [
+                                        'SmartLockID' => (string) $smartLockID,
+                                        'AccountID'   => (string) $accountID,
+                                        'AuthID'      => (string) $authID,
+                                        'Name'        => (string) $name
+                                    ],
+                                    'location' => $location
+                                ]
+                            ];
+                            break;
 
-                    case 3: # Door
-                        $instanceID = $this->GetDeviceInstances($smartLockID, 3);
-                        $values[] = [
-                            'SmartLockID'        => $smartLockID,
-                            'AccountID'          => $accountID,
-                            'AuthID'             => $authID,
-                            'DeviceType'         => $deviceType,
-                            'ProductDesignation' => 'Door',
-                            'name'               => $name,
-                            'instanceID'         => $instanceID
-                            /*
-                            'create' => [
-                                'moduleID' => "{8A30A6FD-A027-95E0-2DB2-F4B4F50E4EEA}",
-                                'name' => $name,
-                                'configuration' => [
-                                    'SmartLockID'  => (string) $smartLockID,
-                                    'AccountID' => (string) $accountID,
-                                    'AuthID' => (string) $authID,
-                                    'Name' => (string) $name
-                                ],
-                                'location' => $location
-                            ]
-                             */
-                        ];
-                        break;
+                        case 3: # Door
+                            $instanceID = $this->GetDeviceInstances($smartLockID, 3);
+                            $values[] = [
+                                'SmartLockID'        => $smartLockID,
+                                'AccountID'          => $accountID,
+                                'AuthID'             => $authID,
+                                'DeviceType'         => $deviceType,
+                                'ProductDesignation' => 'Door',
+                                'name'               => $name,
+                                'instanceID'         => $instanceID
+                                /*
+                                'create' => [
+                                    'moduleID' => "{8A30A6FD-A027-95E0-2DB2-F4B4F50E4EEA}",
+                                    'name' => $name,
+                                    'configuration' => [
+                                        'SmartLockID'  => (string) $smartLockID,
+                                        'AccountID' => (string) $accountID,
+                                        'AuthID' => (string) $authID,
+                                        'Name' => (string) $name
+                                    ],
+                                    'location' => $location
+                                ]
+                                 */
+                            ];
+                            break;
 
+                    }
                 }
             }
         }

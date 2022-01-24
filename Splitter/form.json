@@ -18,18 +18,9 @@
       "caption": "Active"
     },
     {
-      "type": "Label",
-      "caption": " "
-    },
-    {
-      "type": "Label",
-      "caption": "Please enter your API token"
-    },
-    {
-      "type": "PasswordTextBox",
-      "name": "APIToken",
-      "caption": "API Token",
-      "width": "600px"
+      "type": "CheckBox",
+      "name": "UseDeviceStateUpdates",
+      "caption": "Use automatic update"
     },
     {
       "type": "NumberSpinner",
@@ -40,6 +31,20 @@
   ],
   "actions": [
     {
+      "type": "Label",
+      "name": "Token",
+      "caption": "Token"
+    },
+    {
+      "type": "Button",
+      "caption": "Register",
+      "onClick": "echo NUKISW_Register($id);"
+    },
+    {
+      "type": "Label",
+      "caption": " "
+    },
+    {
       "type": "ExpansionPanel",
       "caption": "Developer area",
       "items": [
@@ -47,6 +52,53 @@
           "type": "Button",
           "caption": "Show devices",
           "onClick": "$data=NUKISW_GetSmartLocks($id); print_r(json_decode($data, true));"
+        },
+        {
+          "type": "Label",
+          "caption": " "
+        },
+        {
+          "type": "Label",
+          "name": "WebhookURL",
+          "caption": "Webhook URL"
+        },
+        {
+          "type": "Label",
+          "name": "WebhookSecret",
+          "caption": "Webhook Secret"
+        },
+        {
+          "type": "Button",
+          "caption": "List Webhooks",
+          "onClick": "$data=NUKISW_GetDecentralWebHooks($id); print_r(json_decode($data, true));"
+        },
+        {
+          "type": "RowLayout",
+          "items": [
+            {
+              "type": "NumberSpinner",
+              "name": "WebhookID",
+              "caption": "Webhook ID"
+            },
+            {
+              "type": "Label",
+              "caption": " "
+            },
+            {
+              "type": "PopupButton",
+              "caption": "Delete Webhook",
+              "popup": {
+                "caption": "Do you really want to delete the Webhook?",
+                "items": [
+                  {
+                    "type": "Button",
+                    "caption": "Delete",
+                    "onClick": "$data=NUKISW_DeleteDecentralWebHook($id, $WebhookID); print_r(json_decode($data, true));"
+                  }
+                ]
+              }
+            }
+          ]
         }
       ]
     }

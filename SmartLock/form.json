@@ -45,9 +45,14 @@
       "caption": " "
     },
     {
+      "type": "CheckBox",
+      "name": "UseAutomaticUpdate",
+      "caption": "Use automatic update"
+    },
+    {
       "type": "NumberSpinner",
       "name": "UpdateInterval",
-      "caption": "Update interval",
+      "caption": "Alternative update interval",
       "suffix": "seconds"
     },
     {

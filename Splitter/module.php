@@ -11,10 +11,16 @@ class NukiSplitterWebAPI extends IPSModule
 {
     //Helper
     use NukiWebAPI;
+    use Helper_webHook;
+    use Helper_webOAuth;
 
     //Constants
     private const LIBRARY_GUID = '{8CDE2F20-ECBF-F12E-45AC-B8A7F36CBBFC}';
     private const MODULE_PREFIX = 'NUKISW';
+    private const CORE_CONNECT_GUID = '{9486D575-BE8C-4ED8-B5B5-20930E26DE6F}';
+    private const CORE_WEBHOOK_GUID = '{015A6EB8-D6E5-4B93-B496-0D3F77AE9FE1}';
+    private const CORE_WEBOAUTH_GUID = '{F99BF07D-CECA-438B-A497-E4B55F139D37}';
+    private const NUKI_DEVICE_DATA_GUID = '{6BD0D007-1A06-4F3F-1896-84E2BBFB4B09}';
 
     public function Create()
     {
@@ -22,13 +28,28 @@ class NukiSplitterWebAPI extends IPSModule
         parent::Create();
 
         //Properties
-        $this->RegisterPropertyBoolean('Active', false);
-        $this->RegisterPropertyString('APIToken', '');
+        $this->RegisterPropertyBoolean('Active', true);
         $this->RegisterPropertyInteger('Timeout', 5000);
+        $this->RegisterPropertyBoolean('UseDeviceStateUpdates', true);
+
+        //Attributes
+        $this->RegisterAttributeString('Token', '');
+        $this->RegisterAttributeString('WebhookURL', '');
+        $this->RegisterAttributeString('WebhookSecret', '');
     }
 
     public function Destroy()
     {
+        //Unregister WebHook
+        if (!IPS_InstanceExists($this->InstanceID)) {
+            $this->UnregisterWebhook('/hook/' . $this->oauthIdentifier);
+        }
+
+        //Unregister WebOAuth
+        if (!IPS_InstanceExists($this->InstanceID)) {
+            $this->UnregisterWebOAuth($this->oauthIdentifier);
+        }
+
         //Never delete this line!
         parent::Destroy();
     }
@@ -45,12 +66,30 @@ class NukiSplitterWebAPI extends IPSModule
         if (IPS_GetKernelRunlevel() != KR_READY) {
             return;
         }
-        $this->ValidateConfiguration();
+
+        //Register WebOAuth
+        $this->RegisterWebOAuth($this->oauthIdentifier);
+
+        //Register WebHook
+        $this->RegisterWebHook('/hook/' . $this->oauthIdentifier);
+
+        //Check configuartion
+        if (!$this->ValidateConfiguration()) {
+            return;
+        }
+
+        $this->PrepareNukiWebHook();
+        $this->ManageWebhook();
     }
 
     public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
     {
         $this->SendDebug('MessageSink', 'SenderID: ' . $SenderID . ', Message: ' . $Message, 0);
+        if (!empty($Data)) {
+            foreach ($Data as $key => $value) {
+                $this->SendDebug(__FUNCTION__, 'Data[' . $key . '] = ' . json_encode($value), 0);
+            }
+        }
         switch ($Message) {
             case IPS_KERNELSTARTED:
                 $this->KernelReady();
@@ -61,11 +100,14 @@ class NukiSplitterWebAPI extends IPSModule
 
     public function GetConfigurationForm()
     {
-        $formData = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
+        $data = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
         $library = IPS_GetLibrary(self::LIBRARY_GUID);
         $version = 'Version: ' . $library['Version'] . '-' . $library['Build'] . ' vom ' . date('d.m.Y', $library['Date']);
-        $formData['elements'][2]['caption'] = $version;
-        return json_encode($formData);
+        $data['elements'][2]['caption'] = $version;
+        $data['actions'][0]['caption'] = $this->ReadAttributeString('Token') ? 'Token: ' . substr($this->ReadAttributeString('Token'), 0, 16) . ' ...' : 'Token: Not registered yet!';
+        $data['actions'][3]['items'][2]['caption'] = 'Webhook URL: ' . $this->ReadAttributeString('WebhookURL');
+        $data['actions'][3]['items'][3]['caption'] = 'Webhook Secret: ' . $this->ReadAttributeString('WebhookSecret');
+        return json_encode($data);
     }
 
     public function ForwardData($JSONString): string
@@ -75,6 +117,11 @@ class NukiSplitterWebAPI extends IPSModule
         switch ($data->Buffer->Command) {
             case 'GetSmartLocks':
                 $response = $this->GetSmartLocks();
+                break;
+
+            case 'GetSmartLock':
+                $params = (array) $data->Buffer->Params;
+                $response = $this->GetSmartLock($params['smartlockId']);
                 break;
 
             case 'UpdateSmartLockConfig':
@@ -106,7 +153,6 @@ class NukiSplitterWebAPI extends IPSModule
                 $this->SendDebug(__FUNCTION__, 'Invalid Command: ' . $data->Buffer->Command, 0);
                 $response = '';
         }
-        $this->SendDebug(__FUNCTION__, $response, 0);
         return $response;
     }
 
@@ -117,18 +163,19 @@ class NukiSplitterWebAPI extends IPSModule
         $this->ApplyChanges();
     }
 
-    private function ValidateConfiguration(): void
+    private function ValidateConfiguration(): bool
     {
+        $result = true;
         $status = 102;
-        if (empty($this->ReadPropertyString('APIToken'))) {
-            $this->SendDebug(__FUNCTION__, 'API Token is missing!', 0);
-            $status = 200;
+        if (empty($this->ReadAttributeString('Token'))) {
+            $this->SendDebug(__FUNCTION__, 'Refresh Token is missing, please register first!', 0);
         }
-        $active = $this->ReadPropertyBoolean('Active');
-        if (!$active) {
+        if (!$this->ReadPropertyBoolean('Active')) {
             $this->SendDebug(__FUNCTION__, 'Instance is inactive!', 0);
+            $result = false;
             $status = 104;
         }
         $this->SetStatus($status);
+        return $result;
     }
 }

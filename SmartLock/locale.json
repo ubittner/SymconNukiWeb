@@ -1,7 +1,8 @@
 {
   "translations": {
     "de": {
-      "Update interval": "Aktualisierungsintervall",
+      "Use automatic update": "Status automatisch aktualisieren",
+      "Alternative update interval": "Alternativer Aktualisierungsintervall",
       "seconds": "Sekunden",
       "Use door sensor": "Türsensor",
       "Use keypad": "Keypad",

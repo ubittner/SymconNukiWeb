@@ -22,7 +22,8 @@ class NukiOpenerWebAPI extends IPSModule
         $this->RegisterPropertyString('AccountID', '');
         $this->RegisterPropertyString('AuthID', '');
         $this->RegisterPropertyString('Name', '');
-        $this->RegisterPropertyInteger('UpdateInterval', 300);
+        $this->RegisterPropertyBoolean('UseAutomaticUpdate', true);
+        $this->RegisterPropertyInteger('UpdateInterval', 0);
         $this->RegisterPropertyBoolean('UseActivityLog', true);
         $this->RegisterPropertyInteger('ActivityLogPeriodLastDays', 7);
         $this->RegisterPropertyInteger('ActivityLogMaximumEntries', 50);
@@ -256,6 +257,8 @@ class NukiOpenerWebAPI extends IPSModule
             return;
         }
 
+        ########## Maintain variable
+
         //Activity log
         if ($this->ReadPropertyBoolean('UseActivityLog')) {
             $id = @$this->GetIDForIdent('ActivityLog');
@@ -298,529 +301,47 @@ class NukiOpenerWebAPI extends IPSModule
 
     public function ReceiveData($JSONString)
     {
-        //Received data from splitter, not used at the moment
+        //Received data from splitter
+        $this->SendDebug(__FUNCTION__, 'Incoming data: ' . $JSONString, 0);
+        if (!$this->ReadPropertyBoolean('UseAutomaticUpdate')) {
+            $this->SendDebug(__FUNCTION__, 'Abort, automatic update is disabled!', 0);
+            return;
+        }
         $data = json_decode($JSONString);
-        $this->SendDebug(__FUNCTION__, utf8_decode($data->Buffer), 0);
-    }
-
-    #################### Public methods
-
-    public function GetDeviceType(): int
-    {
-        return $this->ReadAttributeInteger('Type');
-    }
-
-    public function UpdateData(): void
-    {
-        $this->SetTimerInterval('Update', 0);
-        $this->GetOpenerData(true);
-        $this->GetActivityLog(true);
-        $this->SetTimerInterval('Update', $this->ReadPropertyInteger('UpdateInterval') * 1000);
-    }
-
-    public function GetOpenerData(bool $Update): string
-    {
-        $openerData = '';
-        $smartLockID = $this->ReadPropertyString('SmartLockID');
-        if (empty($smartLockID)) {
-            return $openerData;
-        }
-        if (!$this->HasActiveParent()) {
-            return $openerData;
-        }
-        $this->SetTimerInterval('Update', 0);
-        $data = [];
-        $buffer = [];
-        $data['DataID'] = '{7F9C82E4-FF89-7856-2F13-E5A1992167D6}';
-        $buffer['Command'] = 'GetSmartLocks';
-        $buffer['Params'] = '';
-        $data['Buffer'] = $buffer;
-        $data = json_encode($data);
-        $result = json_decode($this->SendDataToParent($data), true);
-        $httpCode = $result['httpCode'];
-        $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
-        if ($httpCode != 200) {
-            $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 200!', 0);
-            return $openerData;
-        }
-        $this->SendDebug(__FUNCTION__, 'Body: ' . $result['body'], 0);
-        foreach (json_decode($result['body'], true) as $device) {
-            if (array_key_exists('smartlockId', $device)) {
-                if ($device['smartlockId'] == $smartLockID) {
-                    $openerData = $device;
-                }
-            }
-        }
-        $this->SendDebug(__FUNCTION__, 'Actual data: ' . json_encode($openerData), 0);
-        if ($Update) {
-            if (!empty($openerData)) {
-                //Type
-                if (array_key_exists('type', $openerData)) {
-                    if ($this->ReadAttributeInteger('Type') == -1) {
-                        $this->WriteAttributeInteger('Type', $openerData['type']);
-                    }
-                }
-                //State
-                $ringToOpenState = false;
-                $continousModeState = false;
-                $deviceState = 0;
-                $batteryState = false;
-                if (array_key_exists('state', $openerData)) {
-                    if (array_key_exists('state', $openerData['state'])) {
-                        $deviceState = $openerData['state']['state'];
-                        if ($deviceState == 3) {
-                            $ringToOpenState = true;
+        $this->SendDebug(__FUNCTION__, 'Buffer data:  ' . json_encode($data->Buffer), 0);
+        $buffer = json_decode(json_encode($data->Buffer), true);
+        // Check feature first
+        if (array_key_exists('feature', $buffer)) {
+            switch ($buffer['feature']) {
+                case 'DEVICE_STATUS':
+                case 'DEVICE_CONFIG':
+                    if (array_key_exists('smartlockId', $buffer)) {
+                        $smartlockID = $buffer['smartlockId'];
+                        if ($smartlockID == $this->ReadPropertyString('SmartLockID')) {
+                            $this->UpdateData();
+                        } else {
+                            $this->SendDebug(__FUNCTION__, 'Abort, data is not for this device!', 0);
                         }
                     }
-                    if (array_key_exists('mode', $openerData['state'])) {
-                        if ($openerData['state']['mode'] == 3) {
-                            $continousModeState = true;
-                            $deviceState = 3;
+                    break;
+
+                case 'DEVICE_LOGS':
+                    if (array_key_exists('smartlockLog', $buffer)) {
+                        $log = $buffer['smartlockLog'];
+                        if (array_key_exists('smartlockId', $log)) {
+                            if ($log['smartlockId'] == $this->ReadPropertyString('SmartLockID')) {
+                                $this->UpdateData();
+                            } else {
+                                $this->SendDebug(__FUNCTION__, 'Abort, data is not for this device!', 0);
+                            }
                         }
                     }
-                    if (array_key_exists('batteryCritical', $openerData['state'])) {
-                        $batteryState = (bool) $openerData['state']['batteryCritical'];
-                    }
-                }
-                $this->SetValue('DeviceState', $deviceState);
-                $this->SetValue('BatteryState', $batteryState);
-                $this->SetValue('RingToOpen', $ringToOpenState);
-                $this->SetValue('ContinuousMode', $continousModeState);
-                //Advanced config
-                if (array_key_exists('openerAdvancedConfig', $openerData)) {
-                    if (is_array($openerData['openerAdvancedConfig'])) {
-                        //Ring to open
-                        $oneTimeAccessState = false;
-                        if ($openerData['openerAdvancedConfig']['disableRtoAfterRing']) {
-                            $oneTimeAccessState = true;
-                        }
-                        $this->SetValue('OneTimeAccess', $oneTimeAccessState);
-                        $this->SetValue('RingToOpenTimeout', $openerData['openerAdvancedConfig']['rtoTimeout']);
-                        //Doorbell suppression
-                        $doorbellSuppression = $openerData['openerAdvancedConfig']['doorbellSuppression'];
-                        switch ($doorbellSuppression) {
-                            case 0: //All off
-                                $this->SetValue('RingSuppressionRing', false);
-                                $this->SetValue('RingSuppressionRingToOpen', false);
-                                $this->SetValue('RingSuppressionContinuousMode', false);
-                                break;
+                    break;
 
-                            case 1: //CM on
-                                $this->SetValue('RingSuppressionRing', false);
-                                $this->SetValue('RingSuppressionRingToOpen', false);
-                                $this->SetValue('RingSuppressionContinuousMode', true);
-                                break;
-
-                            case 2: //RTO on
-                                $this->SetValue('RingSuppressionRing', false);
-                                $this->SetValue('RingSuppressionRingToOpen', true);
-                                $this->SetValue('RingSuppressionContinuousMode', false);
-                                break;
-
-                            case 3: //RTO, CM on
-                                $this->SetValue('RingSuppressionRing', false);
-                                $this->SetValue('RingSuppressionRingToOpen', true);
-                                $this->SetValue('RingSuppressionContinuousMode', true);
-                                break;
-
-                            case 4: //Ring on
-                                $this->SetValue('RingSuppressionRing', true);
-                                $this->SetValue('RingSuppressionRingToOpen', false);
-                                $this->SetValue('RingSuppressionContinuousMode', false);
-                                break;
-
-                            case 5: //Ring, CM on
-                                $this->SetValue('RingSuppressionRing', true);
-                                $this->SetValue('RingSuppressionRingToOpen', false);
-                                $this->SetValue('RingSuppressionContinuousMode', true);
-                                break;
-
-                            case 6: //Ring, RTO on
-                                $this->SetValue('RingSuppressionRing', true);
-                                $this->SetValue('RingSuppressionRingToOpen', true);
-                                $this->SetValue('RingSuppressionContinuousMode', false);
-                                break;
-
-                            case 7: //All on
-                                $this->SetValue('RingSuppressionRing', true);
-                                $this->SetValue('RingSuppressionRingToOpen', true);
-                                $this->SetValue('RingSuppressionContinuousMode', true);
-                                break;
-                        }
-                        //Sounds & volume
-                        $this->SetValue('SoundDoorbellRings', $openerData['openerAdvancedConfig']['soundRing']);
-                        $this->SetValue('SoundOpenViaApp', $openerData['openerAdvancedConfig']['soundOpen']);
-                        $this->SetValue('SoundRingToOpen', $openerData['openerAdvancedConfig']['soundRto']);
-                        $this->SetValue('SoundContinuousMode', $openerData['openerAdvancedConfig']['soundCm']);
-                        $this->SetValue('Volume', $openerData['openerAdvancedConfig']['soundLevel']);
-                    }
-                }
-                //Config
-                if (array_key_exists('config', $openerData)) {
-                    //Opener LED
-                    if (array_key_exists('ledEnabled', $openerData['config'])) {
-                        $this->SetValue('OpenerLED', (bool) $openerData['config']['ledEnabled']);
-                    }
-                }
+                default:
+                    $this->SendDebug(__FUNCTION__, 'Abort, unknown Parameter!', 0);
             }
         }
-        $this->SetTimerInterval('Update', $this->ReadPropertyInteger('UpdateInterval') * 1000);
-        return json_encode($openerData);
-    }
-
-    public function GetActivityLog(bool $Update): string
-    {
-        $smartLockID = $this->ReadPropertyString('SmartLockID');
-        if (empty($smartLockID)) {
-            return '';
-        }
-        if (!$this->HasActiveParent()) {
-            return '';
-        }
-        if (!$this->ReadPropertyBoolean('UseActivityLog')) {
-            return '';
-        }
-        $periodLastDays = $this->ReadPropertyInteger('ActivityLogPeriodLastDays');
-        $limit = $this->ReadPropertyInteger('ActivityLogMaximumEntries');
-        if ($periodLastDays == 0) {
-            $parameter = 'limit=' . $limit;
-        } else {
-            $datetime = urlencode(date('c', strtotime('-' . $this->ReadPropertyInteger('ActivityLogPeriodLastDays') . ' day')));
-            $parameter = 'fromDate=' . $datetime . '&limit=' . $limit;
-        }
-        $data = [];
-        $buffer = [];
-        $data['DataID'] = '{7F9C82E4-FF89-7856-2F13-E5A1992167D6}';
-        $buffer['Command'] = 'GetSmartLockLog';
-        $buffer['Params'] = ['smartlockId' => $smartLockID, 'parameter' => $parameter];
-        $data['Buffer'] = $buffer;
-        $data = json_encode($data);
-        $result = json_decode($this->SendDataToParent($data), true);
-        $httpCode = $result['httpCode'];
-        $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
-        if ($httpCode != 200) {
-            $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 200!', 0);
-            return '';
-        }
-        //Header
-        $string = "<table style='width: 100%; border-collapse: collapse;'>";
-        $string .= '<tr> <td><b> ' . $this->Translate('Date') . '</b></td> <td><b>' . $this->Translate('Action') . '</b></td> <td><b>Name</b></td> <td><b> ' . $this->Translate('Trigger') . '</b></td> </tr>';
-        //Log entries
-        $log = [];
-        $logEntries = json_decode($result['body'], true);
-        foreach ($logEntries as $logEntry) {
-            if (array_key_exists('smartlockId', $logEntry)) {
-                if ($logEntry['smartlockId'] != $smartLockID) {
-                    continue;
-                } else {
-                    $log[] = $logEntry;
-                }
-            }
-            //Date
-            if (array_key_exists('date', $logEntry)) {
-                $date = $logEntry['date'];
-                $date = new DateTime($date);
-                $date->setTimezone(new DateTimeZone(date_default_timezone_get()));
-                $date = $date->format('d.m.Y H:i:s');
-            }
-            //Action
-            if (array_key_exists('action', $logEntry)) {
-                $action = $logEntry['action'];
-                /*
-                 * API action:
-                 * 1    unlock
-                 * 2    lock
-                 * 3    unlatch
-                 * 4    lock'n'go
-                 * 5    lock'n'go with unlatch
-                 * 208  door warning ajar
-                 * 209  door warning status mismatch
-                 * 224  doorbell recognition (only Opener)
-                 * 240  door opened
-                 * 241  door closed
-                 * 242  door sensor jammed
-                 * 243  firmware update
-                 * 250  door log enabled
-                 * 251  door log disabled
-                 * 252  initialization
-                 * 253  calibration
-                 * 254  log enabled
-                 * 255  log disabled
-                 */
-                switch ($action) {
-                    case 1:
-                        $action = $this->Translate('unlock');
-                        break;
-
-                    case 2:
-                        $action = $this->Translate('lock');
-                        break;
-
-                    case 3:
-                        $action = $this->Translate('unlatch');
-                        break;
-
-                    case 4:
-                        $action = $this->Translate("lock'n'go");
-                        break;
-
-                    case 5:
-                        $action = $this->Translate("lock'n'go with unlatch");
-                        break;
-
-                    case 208:
-                        $action = $this->Translate('door warning ajar');
-                        break;
-
-                    case 209:
-                        $action = $this->Translate('door warning status mismatch');
-                        break;
-
-                    case 224:
-                        $action = $this->Translate('doorbell recognition');
-                        break;
-
-                    case 240:
-                        $action = $this->Translate('door opened');
-                        break;
-
-                    case 241:
-                        $action = $this->Translate('door closed');
-                        break;
-
-                    case 242:
-                        $action = $this->Translate('door sensor jammed');
-                        break;
-
-                    case 243:
-                        $action = $this->Translate('firmware update');
-                        break;
-
-                    case 250:
-                        $action = $this->Translate('door log enabled');
-                        break;
-
-                    case 251:
-                        $action = $this->Translate('door log disabled');
-                        break;
-
-                    case 252:
-                        $action = $this->Translate('initialization');
-                        break;
-
-                    case 253:
-                        $action = $this->Translate('calibration');
-                        break;
-
-                    case 254:
-                        $action = $this->Translate('log enabled');
-                        break;
-
-                    case 255:
-                        $action = $this->Translate('log disabled');
-                        break;
-
-                    default:
-                        $action = $action . ' ' . $this->Translate('Unknown');
-                }
-            }
-            //Name
-            if (array_key_exists('name', $logEntry)) {
-                $name = $logEntry['name'];
-                if (empty($name)) {
-                    $name = $this->Translate('Unknown');
-                }
-            }
-            //Trigger
-            if (array_key_exists('trigger', $logEntry)) {
-                $trigger = $logEntry['trigger'];
-                /*
-                 * API trigger:
-                 * 0    system
-                 * 1    manual
-                 * 2    button
-                 * 3    automatic
-                 * 4    web
-                 * 5    app
-                 * 6    auto lock
-                 * 7    accessory
-                 * 255  keypad
-                 */
-                switch ($trigger) {
-                    case 0:
-                        $trigger = $this->Translate('system');
-                        break;
-
-                    case 1:
-                        $trigger = $this->Translate('manual');
-                        break;
-
-                    case 2:
-                        $trigger = $this->Translate('button');
-                        break;
-
-                    case 3:
-                        $trigger = $this->Translate('automatic');
-                        break;
-
-                    case 4:
-                        $trigger = $this->Translate('web');
-                        break;
-
-                    case 5:
-                        $trigger = $this->Translate('app');
-                        break;
-
-                    case 6:
-                        $trigger = $this->Translate('auto lock');
-                        break;
-
-                    case 7:
-                        $trigger = $this->Translate('accessory');
-                        break;
-
-                    case 255:
-                        $trigger = $this->Translate('keypad');
-                        break;
-
-                    default:
-                        $trigger = $this->Translate('Unknown');
-                }
-            }
-            if (isset($date) && isset($action) && isset($name) && isset($trigger)) {
-                $string .= '<tr><td>' . $date . '</td><td>' . $action . '</td><td>' . $name . '</td><td>' . $trigger . '</td></tr>';
-            }
-        }
-        $string .= '</table>';
-        if ($Update) {
-            $this->SetValue('ActivityLog', $string);
-        }
-        return json_encode($log);
-    }
-
-    public function OpenDoor(): void
-    {
-        $smartLockID = $this->ReadPropertyString('SmartLockID');
-        if (empty($smartLockID)) {
-            return;
-        }
-        if (!$this->HasActiveParent()) {
-            return;
-        }
-        $this->SetTimerInterval('Update', 0);
-        $data = [];
-        $buffer = [];
-        $data['DataID'] = '{7F9C82E4-FF89-7856-2F13-E5A1992167D6}';
-        $buffer['Command'] = 'SetSmartLockAction';
-        /*
-         * API action:
-         * 3    open (electric strike actuation)
-         */
-        $buffer['Params'] = ['smartlockId' => $smartLockID, 'action' => 3, 'option' => 0];
-        $data['Buffer'] = $buffer;
-        $data = json_encode($data);
-        $this->SendDebug(__FUNCTION__, 'Data: ' . $data, 0);
-        $result = json_decode($this->SendDataToParent($data), true);
-        $httpCode = $result['httpCode'];
-        $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
-        if ($httpCode != 204) {
-            $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 204!', 0);
-        }
-        $this->SetTimerInterval('Update', 10000);
-    }
-
-    public function ToggleRingToOpen(bool $State): void
-    {
-        $smartLockID = $this->ReadPropertyString('SmartLockID');
-        if (empty($smartLockID)) {
-            return;
-        }
-        if (!$this->HasActiveParent()) {
-            return;
-        }
-        $this->SetTimerInterval('Update', 0);
-        $this->SetValue('RingToOpen', $State);
-        $deviceState = $this->GetValue('DeviceState');
-        if ($State) {
-            $this->SetValue('DeviceState', 3);
-        }
-        /*
-         * API action:
-         * 1    activate ring to open
-         * 2    deactivate ring to open
-         */
-        $action = 1;
-        if (!$State) {
-            $action = 2;
-            if (!$this->GetValue('ContinuousMode')) {
-                $this->SetValue('DeviceState', 1);
-            }
-        }
-        $data = [];
-        $buffer = [];
-        $data['DataID'] = '{7F9C82E4-FF89-7856-2F13-E5A1992167D6}';
-        $buffer['Command'] = 'SetSmartLockAction';
-        $buffer['Params'] = ['smartlockId' => $smartLockID, 'action' => $action, 'option' => 0];
-        $data['Buffer'] = $buffer;
-        $data = json_encode($data);
-        $this->SendDebug(__FUNCTION__, 'Data: ' . $data, 0);
-        $result = json_decode($this->SendDataToParent($data), true);
-        $httpCode = $result['httpCode'];
-        $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
-        if ($httpCode != 204) {
-            $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 204!', 0);
-            //Revert
-            $this->SetValue('RingToOpen', !$State);
-            $this->SetValue('DeviceState', $deviceState);
-        }
-        $this->SetTimerInterval('Update', 10000);
-    }
-
-    public function ToggleContinuousMode(bool $State): void
-    {
-        $smartLockID = $this->ReadPropertyString('SmartLockID');
-        if (empty($smartLockID)) {
-            return;
-        }
-        if (!$this->HasActiveParent()) {
-            return;
-        }
-        $this->SetTimerInterval('Update', 0);
-        $this->SetValue('ContinuousMode', $State);
-        $deviceState = $this->GetValue('DeviceState');
-        if ($State) {
-            $this->SetValue('DeviceState', 3);
-        }
-        /*
-         * API action:
-         * 6    activate continuous mode
-         * 7    deactivate continuous mode
-         */
-        $action = 6;
-        if (!$State) {
-            $action = 7;
-            if (!$this->GetValue('RingToOpen')) {
-                $this->SetValue('DeviceState', 1);
-            }
-        }
-        $data = [];
-        $buffer = [];
-        $data['DataID'] = '{7F9C82E4-FF89-7856-2F13-E5A1992167D6}';
-        $buffer['Command'] = 'SetSmartLockAction';
-        $buffer['Params'] = ['smartlockId' => $smartLockID, 'action' => $action, 'option' => 0];
-        $data['Buffer'] = $buffer;
-        $data = json_encode($data);
-        $this->SendDebug(__FUNCTION__, 'Data: ' . $data, 0);
-        $result = json_decode($this->SendDataToParent($data), true);
-        $httpCode = $result['httpCode'];
-        $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
-        if ($httpCode != 204) {
-            $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 204!', 0);
-            //Revert
-            $this->SetValue('ContinuousMode', !$State);
-            $this->SetValue('DeviceState', $deviceState);
-        }
-        $this->SetTimerInterval('Update', 10000);
     }
 
     #################### Request Action
@@ -859,6 +380,540 @@ class NukiOpenerWebAPI extends IPSModule
                 $this->UpdateConfig();
                 break;
 
+        }
+    }
+
+    #################### Public methods
+
+    public function GetDeviceType(): int
+    {
+        return $this->ReadAttributeInteger('Type');
+    }
+
+    public function UpdateData(): void
+    {
+        $this->SetTimerInterval('Update', 0);
+        $this->GetOpenerData(true);
+        $this->GetActivityLog(true);
+        $this->SetTimerInterval('Update', $this->ReadPropertyInteger('UpdateInterval') * 1000);
+    }
+
+    public function GetOpenerData(bool $Update): string
+    {
+        $openerData = '';
+        $smartLockID = $this->ReadPropertyString('SmartLockID');
+        if (empty($smartLockID)) {
+            return $openerData;
+        }
+        if (!$this->HasActiveParent()) {
+            return $openerData;
+        }
+        $this->SetTimerInterval('Update', 0);
+        $data = [];
+        $buffer = [];
+        $data['DataID'] = '{7F9C82E4-FF89-7856-2F13-E5A1992167D6}';
+        $buffer['Command'] = 'GetSmartLock';
+        $buffer['Params'] = ['smartlockId' => $smartLockID];
+        $data['Buffer'] = $buffer;
+        $data = json_encode($data);
+        $result = json_decode($this->SendDataToParent($data), true);
+        if (array_key_exists('httpCode', $result)) {
+            $httpCode = $result['httpCode'];
+            $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
+            if ($httpCode != 200) {
+                $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 200!', 0);
+                return $openerData;
+            }
+        }
+        $this->SendDebug(__FUNCTION__, 'Actual data: ' . $result['body'], 0);
+        if (array_key_exists('body', $result)) {
+            $openerData = json_decode($result['body'], true);
+            if ($Update) {
+                if (!empty($openerData)) {
+                    //Type
+                    if (array_key_exists('type', $openerData)) {
+                        if ($this->ReadAttributeInteger('Type') == -1) {
+                            $this->WriteAttributeInteger('Type', $openerData['type']);
+                        }
+                    }
+                    //State
+                    $ringToOpenState = false;
+                    $continousModeState = false;
+                    $deviceState = 0;
+                    $batteryState = false;
+                    if (array_key_exists('state', $openerData)) {
+                        if (array_key_exists('state', $openerData['state'])) {
+                            $deviceState = $openerData['state']['state'];
+                            if ($deviceState == 3) {
+                                $ringToOpenState = true;
+                            }
+                        }
+                        if (array_key_exists('mode', $openerData['state'])) {
+                            if ($openerData['state']['mode'] == 3) {
+                                $continousModeState = true;
+                                $deviceState = 3;
+                            }
+                        }
+                        if (array_key_exists('batteryCritical', $openerData['state'])) {
+                            $batteryState = (bool) $openerData['state']['batteryCritical'];
+                        }
+                    }
+                    $this->SetValue('DeviceState', $deviceState);
+                    $this->SetValue('BatteryState', $batteryState);
+                    $this->SetValue('RingToOpen', $ringToOpenState);
+                    $this->SetValue('ContinuousMode', $continousModeState);
+                    //Advanced config
+                    if (array_key_exists('openerAdvancedConfig', $openerData)) {
+                        if (is_array($openerData['openerAdvancedConfig'])) {
+                            //Ring to open
+                            $oneTimeAccessState = false;
+                            if ($openerData['openerAdvancedConfig']['disableRtoAfterRing']) {
+                                $oneTimeAccessState = true;
+                            }
+                            $this->SetValue('OneTimeAccess', $oneTimeAccessState);
+                            $this->SetValue('RingToOpenTimeout', $openerData['openerAdvancedConfig']['rtoTimeout']);
+                            //Doorbell suppression
+                            $doorbellSuppression = $openerData['openerAdvancedConfig']['doorbellSuppression'];
+                            switch ($doorbellSuppression) {
+                                case 0: //All off
+                                    $this->SetValue('RingSuppressionRing', false);
+                                    $this->SetValue('RingSuppressionRingToOpen', false);
+                                    $this->SetValue('RingSuppressionContinuousMode', false);
+                                    break;
+
+                                case 1: //CM on
+                                    $this->SetValue('RingSuppressionRing', false);
+                                    $this->SetValue('RingSuppressionRingToOpen', false);
+                                    $this->SetValue('RingSuppressionContinuousMode', true);
+                                    break;
+
+                                case 2: //RTO on
+                                    $this->SetValue('RingSuppressionRing', false);
+                                    $this->SetValue('RingSuppressionRingToOpen', true);
+                                    $this->SetValue('RingSuppressionContinuousMode', false);
+                                    break;
+
+                                case 3: //RTO, CM on
+                                    $this->SetValue('RingSuppressionRing', false);
+                                    $this->SetValue('RingSuppressionRingToOpen', true);
+                                    $this->SetValue('RingSuppressionContinuousMode', true);
+                                    break;
+
+                                case 4: //Ring on
+                                    $this->SetValue('RingSuppressionRing', true);
+                                    $this->SetValue('RingSuppressionRingToOpen', false);
+                                    $this->SetValue('RingSuppressionContinuousMode', false);
+                                    break;
+
+                                case 5: //Ring, CM on
+                                    $this->SetValue('RingSuppressionRing', true);
+                                    $this->SetValue('RingSuppressionRingToOpen', false);
+                                    $this->SetValue('RingSuppressionContinuousMode', true);
+                                    break;
+
+                                case 6: //Ring, RTO on
+                                    $this->SetValue('RingSuppressionRing', true);
+                                    $this->SetValue('RingSuppressionRingToOpen', true);
+                                    $this->SetValue('RingSuppressionContinuousMode', false);
+                                    break;
+
+                                case 7: //All on
+                                    $this->SetValue('RingSuppressionRing', true);
+                                    $this->SetValue('RingSuppressionRingToOpen', true);
+                                    $this->SetValue('RingSuppressionContinuousMode', true);
+                                    break;
+                            }
+                            //Sounds & volume
+                            $this->SetValue('SoundDoorbellRings', $openerData['openerAdvancedConfig']['soundRing']);
+                            $this->SetValue('SoundOpenViaApp', $openerData['openerAdvancedConfig']['soundOpen']);
+                            $this->SetValue('SoundRingToOpen', $openerData['openerAdvancedConfig']['soundRto']);
+                            $this->SetValue('SoundContinuousMode', $openerData['openerAdvancedConfig']['soundCm']);
+                            $this->SetValue('Volume', $openerData['openerAdvancedConfig']['soundLevel']);
+                        }
+                    }
+                    //Config
+                    if (array_key_exists('config', $openerData)) {
+                        //Opener LED
+                        if (array_key_exists('ledEnabled', $openerData['config'])) {
+                            $this->SetValue('OpenerLED', (bool) $openerData['config']['ledEnabled']);
+                        }
+                    }
+                }
+            }
+        }
+        $this->SetTimerInterval('Update', $this->ReadPropertyInteger('UpdateInterval') * 1000);
+        return json_encode($openerData);
+    }
+
+    public function GetActivityLog(bool $Update): string
+    {
+        $smartLockID = $this->ReadPropertyString('SmartLockID');
+        if (empty($smartLockID)) {
+            return '';
+        }
+        if (!$this->HasActiveParent()) {
+            return '';
+        }
+        if (!$this->ReadPropertyBoolean('UseActivityLog')) {
+            return '';
+        }
+        $periodLastDays = $this->ReadPropertyInteger('ActivityLogPeriodLastDays');
+        $limit = $this->ReadPropertyInteger('ActivityLogMaximumEntries');
+        if ($periodLastDays == 0) {
+            $parameter = 'limit=' . $limit;
+        } else {
+            $datetime = urlencode(date('c', strtotime('-' . $this->ReadPropertyInteger('ActivityLogPeriodLastDays') . ' day')));
+            $parameter = 'fromDate=' . $datetime . '&limit=' . $limit;
+        }
+        $data = [];
+        $buffer = [];
+        $data['DataID'] = '{7F9C82E4-FF89-7856-2F13-E5A1992167D6}';
+        $buffer['Command'] = 'GetSmartLockLog';
+        $buffer['Params'] = ['smartlockId' => $smartLockID, 'parameter' => $parameter];
+        $data['Buffer'] = $buffer;
+        $data = json_encode($data);
+        $result = json_decode($this->SendDataToParent($data), true);
+        if (array_key_exists('httpCode', $result)) {
+            $httpCode = $result['httpCode'];
+            $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
+            if ($httpCode != 200) {
+                $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 200!', 0);
+                return '';
+            }
+        }
+        $log = [];
+        if (array_key_exists('body', $result)) {
+            $this->SendDebug(__FUNCTION__, 'Body: ' . $result['body'], 0);
+            //Header
+            $string = "<table style='width: 100%; border-collapse: collapse;'>";
+            $string .= '<tr> <td><b> ' . $this->Translate('Date') . '</b></td> <td><b>' . $this->Translate('Action') . '</b></td> <td><b>Name</b></td> <td><b> ' . $this->Translate('Trigger') . '</b></td> </tr>';
+            //Log entries
+            $logEntries = json_decode($result['body'], true);
+            foreach ($logEntries as $logEntry) {
+                if (array_key_exists('smartlockId', $logEntry)) {
+                    if ($logEntry['smartlockId'] != $smartLockID) {
+                        continue;
+                    } else {
+                        $log[] = $logEntry;
+                    }
+                }
+                //Date
+                if (array_key_exists('date', $logEntry)) {
+                    $date = $logEntry['date'];
+                    $date = new DateTime($date);
+                    $date->setTimezone(new DateTimeZone(date_default_timezone_get()));
+                    $date = $date->format('d.m.Y H:i:s');
+                }
+                //Action
+                if (array_key_exists('action', $logEntry)) {
+                    $action = $logEntry['action'];
+                    /*
+                     * API action:
+                     * 1    unlock
+                     * 2    lock
+                     * 3    unlatch
+                     * 4    lock'n'go
+                     * 5    lock'n'go with unlatch
+                     * 208  door warning ajar
+                     * 209  door warning status mismatch
+                     * 224  doorbell recognition (only Opener)
+                     * 240  door opened
+                     * 241  door closed
+                     * 242  door sensor jammed
+                     * 243  firmware update
+                     * 250  door log enabled
+                     * 251  door log disabled
+                     * 252  initialization
+                     * 253  calibration
+                     * 254  log enabled
+                     * 255  log disabled
+                     */
+                    switch ($action) {
+                        case 1:
+                            $action = $this->Translate('unlock');
+                            break;
+
+                        case 2:
+                            $action = $this->Translate('lock');
+                            break;
+
+                        case 3:
+                            $action = $this->Translate('unlatch');
+                            break;
+
+                        case 4:
+                            $action = $this->Translate("lock'n'go");
+                            break;
+
+                        case 5:
+                            $action = $this->Translate("lock'n'go with unlatch");
+                            break;
+
+                        case 208:
+                            $action = $this->Translate('door warning ajar');
+                            break;
+
+                        case 209:
+                            $action = $this->Translate('door warning status mismatch');
+                            break;
+
+                        case 224:
+                            $action = $this->Translate('doorbell recognition');
+                            break;
+
+                        case 240:
+                            $action = $this->Translate('door opened');
+                            break;
+
+                        case 241:
+                            $action = $this->Translate('door closed');
+                            break;
+
+                        case 242:
+                            $action = $this->Translate('door sensor jammed');
+                            break;
+
+                        case 243:
+                            $action = $this->Translate('firmware update');
+                            break;
+
+                        case 250:
+                            $action = $this->Translate('door log enabled');
+                            break;
+
+                        case 251:
+                            $action = $this->Translate('door log disabled');
+                            break;
+
+                        case 252:
+                            $action = $this->Translate('initialization');
+                            break;
+
+                        case 253:
+                            $action = $this->Translate('calibration');
+                            break;
+
+                        case 254:
+                            $action = $this->Translate('log enabled');
+                            break;
+
+                        case 255:
+                            $action = $this->Translate('log disabled');
+                            break;
+
+                        default:
+                            $action = $action . ' ' . $this->Translate('Unknown');
+                    }
+                }
+                //Name
+                if (array_key_exists('name', $logEntry)) {
+                    $name = $logEntry['name'];
+                    if (empty($name)) {
+                        $name = $this->Translate('Unknown');
+                    }
+                }
+                //Trigger
+                if (array_key_exists('trigger', $logEntry)) {
+                    $trigger = $logEntry['trigger'];
+                    /*
+                     * API trigger:
+                     * 0    system
+                     * 1    manual
+                     * 2    button
+                     * 3    automatic
+                     * 4    web
+                     * 5    app
+                     * 6    auto lock
+                     * 7    accessory
+                     * 255  keypad
+                     */
+                    switch ($trigger) {
+                        case 0:
+                            $trigger = $this->Translate('system');
+                            break;
+
+                        case 1:
+                            $trigger = $this->Translate('manual');
+                            break;
+
+                        case 2:
+                            $trigger = $this->Translate('button');
+                            break;
+
+                        case 3:
+                            $trigger = $this->Translate('automatic');
+                            break;
+
+                        case 4:
+                            $trigger = $this->Translate('web');
+                            break;
+
+                        case 5:
+                            $trigger = $this->Translate('app');
+                            break;
+
+                        case 6:
+                            $trigger = $this->Translate('auto lock');
+                            break;
+
+                        case 7:
+                            $trigger = $this->Translate('accessory');
+                            break;
+
+                        case 255:
+                            $trigger = $this->Translate('keypad');
+                            break;
+
+                        default:
+                            $trigger = $this->Translate('Unknown');
+                    }
+                }
+                if (isset($date) && isset($action) && isset($name) && isset($trigger)) {
+                    $string .= '<tr><td>' . $date . '</td><td>' . $action . '</td><td>' . $name . '</td><td>' . $trigger . '</td></tr>';
+                }
+            }
+            $string .= '</table>';
+            if ($Update) {
+                $this->SetValue('ActivityLog', $string);
+            }
+        }
+        return json_encode($log);
+    }
+
+    public function OpenDoor(): void
+    {
+        $smartLockID = $this->ReadPropertyString('SmartLockID');
+        if (empty($smartLockID)) {
+            return;
+        }
+        if (!$this->HasActiveParent()) {
+            return;
+        }
+        $this->SetTimerInterval('Update', 0);
+        $data = [];
+        $buffer = [];
+        $data['DataID'] = '{7F9C82E4-FF89-7856-2F13-E5A1992167D6}';
+        $buffer['Command'] = 'SetSmartLockAction';
+        /*
+         * API action:
+         * 3    open (electric strike actuation)
+         */
+        $buffer['Params'] = ['smartlockId' => $smartLockID, 'action' => 3, 'option' => 0];
+        $data['Buffer'] = $buffer;
+        $data = json_encode($data);
+        $this->SendDebug(__FUNCTION__, 'Data: ' . $data, 0);
+        $result = json_decode($this->SendDataToParent($data), true);
+        if (array_key_exists('httpCode', $result)) {
+            $httpCode = $result['httpCode'];
+            $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
+            if ($httpCode != 204) {
+                $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 204!', 0);
+            }
+        }
+        if (!$this->ReadPropertyBoolean('UseAutomaticUpdate')) {
+            $this->SetTimerInterval('Update', 10000);
+        }
+    }
+
+    public function ToggleRingToOpen(bool $State): void
+    {
+        $smartLockID = $this->ReadPropertyString('SmartLockID');
+        if (empty($smartLockID)) {
+            return;
+        }
+        if (!$this->HasActiveParent()) {
+            return;
+        }
+        $this->SetTimerInterval('Update', 0);
+        $this->SetValue('RingToOpen', $State);
+        $deviceState = $this->GetValue('DeviceState');
+        if ($State) {
+            $this->SetValue('DeviceState', 3);
+        }
+        /*
+         * API action:
+         * 1    activate ring to open
+         * 2    deactivate ring to open
+         */
+        $action = 1;
+        if (!$State) {
+            $action = 2;
+            if (!$this->GetValue('ContinuousMode')) {
+                $this->SetValue('DeviceState', 1);
+            }
+        }
+        $data = [];
+        $buffer = [];
+        $data['DataID'] = '{7F9C82E4-FF89-7856-2F13-E5A1992167D6}';
+        $buffer['Command'] = 'SetSmartLockAction';
+        $buffer['Params'] = ['smartlockId' => $smartLockID, 'action' => $action, 'option' => 0];
+        $data['Buffer'] = $buffer;
+        $data = json_encode($data);
+        $this->SendDebug(__FUNCTION__, 'Data: ' . $data, 0);
+        $result = json_decode($this->SendDataToParent($data), true);
+        if (array_key_exists('httpCode', $result)) {
+            $httpCode = $result['httpCode'];
+            $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
+            if ($httpCode != 204) {
+                $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 204!', 0);
+                //Revert
+                $this->SetValue('RingToOpen', !$State);
+                $this->SetValue('DeviceState', $deviceState);
+            }
+        }
+        if (!$this->ReadPropertyBoolean('UseAutomaticUpdate')) {
+            $this->SetTimerInterval('Update', 10000);
+        }
+    }
+
+    public function ToggleContinuousMode(bool $State): void
+    {
+        $smartLockID = $this->ReadPropertyString('SmartLockID');
+        if (empty($smartLockID)) {
+            return;
+        }
+        if (!$this->HasActiveParent()) {
+            return;
+        }
+        $this->SetTimerInterval('Update', 0);
+        $this->SetValue('ContinuousMode', $State);
+        $deviceState = $this->GetValue('DeviceState');
+        if ($State) {
+            $this->SetValue('DeviceState', 3);
+        }
+        /*
+         * API action:
+         * 6    activate continuous mode
+         * 7    deactivate continuous mode
+         */
+        $action = 6;
+        if (!$State) {
+            $action = 7;
+            if (!$this->GetValue('RingToOpen')) {
+                $this->SetValue('DeviceState', 1);
+            }
+        }
+        $data = [];
+        $buffer = [];
+        $data['DataID'] = '{7F9C82E4-FF89-7856-2F13-E5A1992167D6}';
+        $buffer['Command'] = 'SetSmartLockAction';
+        $buffer['Params'] = ['smartlockId' => $smartLockID, 'action' => $action, 'option' => 0];
+        $data['Buffer'] = $buffer;
+        $data = json_encode($data);
+        $this->SendDebug(__FUNCTION__, 'Data: ' . $data, 0);
+        $result = json_decode($this->SendDataToParent($data), true);
+        if (array_key_exists('httpCode', $result)) {
+            $httpCode = $result['httpCode'];
+            $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
+            if ($httpCode != 204) {
+                $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 204!', 0);
+                //Revert
+                $this->SetValue('ContinuousMode', !$State);
+                $this->SetValue('DeviceState', $deviceState);
+            }
+        }
+        if (!$this->ReadPropertyBoolean('UseAutomaticUpdate')) {
+            $this->SetTimerInterval('Update', 10000);
         }
     }
 
@@ -908,12 +963,16 @@ class NukiOpenerWebAPI extends IPSModule
         $data['Buffer'] = $buffer;
         $data = json_encode($data);
         $result = json_decode($this->SendDataToParent($data), true);
-        $httpCode = $result['httpCode'];
-        $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
-        if ($httpCode != 204) {
-            $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 204!', 0);
+        if (array_key_exists('httpCode', $result)) {
+            $httpCode = $result['httpCode'];
+            $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
+            if ($httpCode != 204) {
+                $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 204!', 0);
+            }
         }
-        $this->SetTimerInterval('Update', 10000);
+        if (!$this->ReadPropertyBoolean('UseAutomaticUpdate')) {
+            $this->SetTimerInterval('Update', 10000);
+        }
     }
 
     private function UpdateAdvanceConfig(): void
@@ -973,11 +1032,15 @@ class NukiOpenerWebAPI extends IPSModule
         $data['Buffer'] = $buffer;
         $data = json_encode($data);
         $result = json_decode($this->SendDataToParent($data), true);
-        $httpCode = $result['httpCode'];
-        $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
-        if ($httpCode != 204) {
-            $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 204!', 0);
+        if (array_key_exists('httpCode', $result)) {
+            $httpCode = $result['httpCode'];
+            $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
+            if ($httpCode != 204) {
+                $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 204!', 0);
+            }
         }
-        $this->SetTimerInterval('Update', 10000);
+        if (!$this->ReadPropertyBoolean('UseAutomaticUpdate')) {
+            $this->SetTimerInterval('Update', 10000);
+        }
     }
 }

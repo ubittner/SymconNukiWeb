@@ -1,6 +1,7 @@
 <?php
 
 /** @noinspection DuplicatedCode */
+/** @noinspection PhpUnused */
 
 declare(strict_types=1);
 
@@ -21,7 +22,8 @@ class NukiSmartLockWebAPI extends IPSModule
         $this->RegisterPropertyString('AccountID', '');
         $this->RegisterPropertyString('AuthID', '');
         $this->RegisterPropertyString('Name', '');
-        $this->RegisterPropertyInteger('UpdateInterval', 300);
+        $this->RegisterPropertyBoolean('UseAutomaticUpdate', true);
+        $this->RegisterPropertyInteger('UpdateInterval', 0);
         $this->RegisterPropertyBoolean('UseDoorSensor', false);
         $this->RegisterPropertyBoolean('UseKeypad', false);
         $this->RegisterPropertyBoolean('UseActivityLog', true);
@@ -154,8 +156,9 @@ class NukiSmartLockWebAPI extends IPSModule
             return;
         }
 
-        //Door sensor
+        ##### Maintain variables
 
+        //Door sensor
         if ($this->ReadPropertyBoolean('UseDoorSensor')) {
             //Door state
             $profile = self::MODULE_PREFIX . '.' . $this->InstanceID . '.DoorState';
@@ -208,7 +211,6 @@ class NukiSmartLockWebAPI extends IPSModule
         }
 
         //Activity log
-
         if ($this->ReadPropertyBoolean('UseActivityLog')) {
             $id = @$this->GetIDForIdent('ActivityLog');
             $this->MaintainVariable('ActivityLog', $this->Translate('Activity log'), 3, 'HTMLBox', 500, true);
@@ -250,9 +252,65 @@ class NukiSmartLockWebAPI extends IPSModule
 
     public function ReceiveData($JSONString)
     {
-        //Received data from splitter, not used at the moment
+        //Received data from splitter
+        $this->SendDebug(__FUNCTION__, 'Incoming data: ' . $JSONString, 0);
+        if (!$this->ReadPropertyBoolean('UseAutomaticUpdate')) {
+            $this->SendDebug(__FUNCTION__, 'Abort, automatic update is disabled!', 0);
+            return;
+        }
         $data = json_decode($JSONString);
-        $this->SendDebug(__FUNCTION__, utf8_decode($data->Buffer), 0);
+        $this->SendDebug(__FUNCTION__, 'Buffer data:  ' . json_encode($data->Buffer), 0);
+        $buffer = json_decode(json_encode($data->Buffer), true);
+        // Check feature first
+        if (array_key_exists('feature', $buffer)) {
+            switch ($buffer['feature']) {
+                case 'DEVICE_STATUS':
+                case 'DEVICE_CONFIG':
+                    if (array_key_exists('smartlockId', $buffer)) {
+                        $smartlockID = $buffer['smartlockId'];
+                        if ($smartlockID == $this->ReadPropertyString('SmartLockID')) {
+                            $this->UpdateData();
+                        } else {
+                            $this->SendDebug(__FUNCTION__, 'Abort, data is not for this device!', 0);
+                        }
+                    }
+                    break;
+
+                case 'DEVICE_LOGS':
+                    if (array_key_exists('smartlockLog', $buffer)) {
+                        $log = $buffer['smartlockLog'];
+                        if (array_key_exists('smartlockId', $log)) {
+                            if ($log['smartlockId'] == $this->ReadPropertyString('SmartLockID')) {
+                                $this->UpdateData();
+                            } else {
+                                $this->SendDebug(__FUNCTION__, 'Abort, data is not for this device!', 0);
+                            }
+                        }
+                    }
+                    break;
+
+                default:
+                    $this->SendDebug(__FUNCTION__, 'Abort, unknown Parameter!', 0);
+            }
+        }
+    }
+
+    #################### Request Action
+
+    public function RequestAction($Ident, $Value): void
+    {
+        switch ($Ident) {
+            case 'SmartLock':
+                $this->SetSmartLockAction($Value);
+                break;
+
+            case 'SmartLockLED':
+            case 'Brightness':
+                $this->SetValue($Ident, $Value);
+                $this->UpdateConfig();
+                break;
+
+        }
     }
 
     #################### Public methods
@@ -284,91 +342,88 @@ class NukiSmartLockWebAPI extends IPSModule
         $data = [];
         $buffer = [];
         $data['DataID'] = '{7F9C82E4-FF89-7856-2F13-E5A1992167D6}';
-        $buffer['Command'] = 'GetSmartLocks';
-        $buffer['Params'] = '';
+        $buffer['Command'] = 'GetSmartLock';
+        $buffer['Params'] = ['smartlockId' => $smartLockID];
         $data['Buffer'] = $buffer;
         $data = json_encode($data);
         $result = json_decode($this->SendDataToParent($data), true);
-        $httpCode = $result['httpCode'];
-        $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
-        if ($httpCode != 200) {
-            $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 200!', 0);
-            return $smartLockData;
-        }
-        $this->SendDebug(__FUNCTION__, 'Body: ' . $result['body'], 0);
-        foreach (json_decode($result['body'], true) as $device) {
-            if (array_key_exists('smartlockId', $device)) {
-                if ($device['smartlockId'] == $smartLockID) {
-                    $smartLockData = $device;
-                }
+        if (array_key_exists('httpCode', $result)) {
+            $httpCode = $result['httpCode'];
+            $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
+            if ($httpCode != 200) {
+                $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 200!', 0);
+                return $smartLockData;
             }
         }
-        $this->SendDebug(__FUNCTION__, 'Actual data: ' . json_encode($smartLockData), 0);
-        if ($Update) {
-            if (!empty($smartLockData)) {
-                //Type
-                if (array_key_exists('type', $smartLockData)) {
-                    if ($this->ReadAttributeInteger('Type') == -1) {
-                        $this->WriteAttributeInteger('Type', $smartLockData['type']);
+        if (array_key_exists('body', $result)) {
+            $this->SendDebug(__FUNCTION__, 'Actual data: ' . $result['body'], 0);
+            $smartLockData = json_decode($result['body'], true);
+            if ($Update) {
+                if (!empty($smartLockData)) {
+                    //Type
+                    if (array_key_exists('type', $smartLockData)) {
+                        if ($this->ReadAttributeInteger('Type') == -1) {
+                            $this->WriteAttributeInteger('Type', $smartLockData['type']);
+                        }
                     }
-                }
-                //State
-                $deviceState = 256;
-                $batteryState = false;
-                $batteryCharge = 0;
-                $batteryCharging = 0;
-                if (array_key_exists('state', $smartLockData)) {
-                    if (array_key_exists('state', $smartLockData['state'])) {
-                        $deviceState = $smartLockData['state']['state'];
-                        $this->SetValue('DeviceState', $deviceState);
-                    }
-                    if (array_key_exists('batteryCritical', $smartLockData['state'])) {
-                        $batteryState = (bool) $smartLockData['state']['batteryCritical'];
-                    }
-                    if (array_key_exists('batteryCharge', $smartLockData['state'])) {
-                        $batteryCharge = $smartLockData['state']['batteryCharge'];
-                    }
-                    if (array_key_exists('batteryCharging', $smartLockData['state'])) {
-                        $batteryCharging = $smartLockData['state']['batteryCharging'];
-                    }
-                }
-                $this->SetValue('DeviceState', $deviceState);
-                $this->SetValue('BatteryState', $batteryState);
-                $this->SetValue('BatteryCharge', $batteryCharge);
-                $this->SetValue('BatteryCharging', $batteryCharging);
-                //Door sensor
-                if ($this->ReadPropertyBoolean('UseDoorSensor')) {
+                    //State
+                    $deviceState = 256;
+                    $batteryState = false;
+                    $batteryCharge = 0;
+                    $batteryCharging = 0;
                     if (array_key_exists('state', $smartLockData)) {
-                        if (array_key_exists('doorState', $smartLockData['state'])) {
-                            $doorState = $smartLockData['state']['doorState'];
-                            $this->SetValue('DoorState', $doorState);
+                        if (array_key_exists('state', $smartLockData['state'])) {
+                            $deviceState = $smartLockData['state']['state'];
+                            $this->SetValue('DeviceState', $deviceState);
                         }
-                        $doorSensorBatteryState = false;
-                        if (array_key_exists('doorsensorBatteryCritical', $smartLockData['state'])) {
-                            $doorSensorBatteryState = (bool) $smartLockData['state']['doorsensorBatteryCritical'];
+                        if (array_key_exists('batteryCritical', $smartLockData['state'])) {
+                            $batteryState = (bool) $smartLockData['state']['batteryCritical'];
                         }
-                        $this->SetValue('DoorSensorBatteryState', $doorSensorBatteryState);
-                    }
-                }
-                //Keypad
-                if ($this->ReadPropertyBoolean('UseKeypad')) {
-                    if (array_key_exists('state', $smartLockData)) {
-                        $keypadBatteryState = false;
-                        if (array_key_exists('keypadBatteryCritical', $smartLockData['state'])) {
-                            $keypadBatteryState = (bool) $smartLockData['state']['keypadBatteryCritical'];
+                        if (array_key_exists('batteryCharge', $smartLockData['state'])) {
+                            $batteryCharge = $smartLockData['state']['batteryCharge'];
                         }
-                        $this->SetValue('KeypadBatteryState', $keypadBatteryState);
+                        if (array_key_exists('batteryCharging', $smartLockData['state'])) {
+                            $batteryCharging = $smartLockData['state']['batteryCharging'];
+                        }
                     }
-                }
-                //Config
-                if (array_key_exists('config', $smartLockData)) {
-                    //Smart lock LED
-                    if (array_key_exists('ledEnabled', $smartLockData['config'])) {
-                        $this->SetValue('SmartLockLED', (bool) $smartLockData['config']['ledEnabled']);
+                    $this->SetValue('DeviceState', $deviceState);
+                    $this->SetValue('BatteryState', $batteryState);
+                    $this->SetValue('BatteryCharge', $batteryCharge);
+                    $this->SetValue('BatteryCharging', $batteryCharging);
+                    //Door sensor
+                    if ($this->ReadPropertyBoolean('UseDoorSensor')) {
+                        if (array_key_exists('state', $smartLockData)) {
+                            if (array_key_exists('doorState', $smartLockData['state'])) {
+                                $doorState = $smartLockData['state']['doorState'];
+                                $this->SetValue('DoorState', $doorState);
+                            }
+                            $doorSensorBatteryState = false;
+                            if (array_key_exists('doorsensorBatteryCritical', $smartLockData['state'])) {
+                                $doorSensorBatteryState = (bool) $smartLockData['state']['doorsensorBatteryCritical'];
+                            }
+                            $this->SetValue('DoorSensorBatteryState', $doorSensorBatteryState);
+                        }
                     }
-                    //LED brighntess
-                    if (array_key_exists('ledBrightness', $smartLockData['config'])) {
-                        $this->SetValue('Brightness', (int) $smartLockData['config']['ledBrightness']);
+                    //Keypad
+                    if ($this->ReadPropertyBoolean('UseKeypad')) {
+                        if (array_key_exists('state', $smartLockData)) {
+                            $keypadBatteryState = false;
+                            if (array_key_exists('keypadBatteryCritical', $smartLockData['state'])) {
+                                $keypadBatteryState = (bool) $smartLockData['state']['keypadBatteryCritical'];
+                            }
+                            $this->SetValue('KeypadBatteryState', $keypadBatteryState);
+                        }
+                    }
+                    //Config
+                    if (array_key_exists('config', $smartLockData)) {
+                        //Smart lock LED
+                        if (array_key_exists('ledEnabled', $smartLockData['config'])) {
+                            $this->SetValue('SmartLockLED', (bool) $smartLockData['config']['ledEnabled']);
+                        }
+                        //LED brighntess
+                        if (array_key_exists('ledBrightness', $smartLockData['config'])) {
+                            $this->SetValue('Brightness', (int) $smartLockData['config']['ledBrightness']);
+                        }
                     }
                 }
             }
@@ -405,204 +460,209 @@ class NukiSmartLockWebAPI extends IPSModule
         $data['Buffer'] = $buffer;
         $data = json_encode($data);
         $result = json_decode($this->SendDataToParent($data), true);
-        $httpCode = $result['httpCode'];
-        $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
-        if ($httpCode != 200) {
-            $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 200!', 0);
-            return '';
+        if (array_key_exists('httpCode', $result)) {
+            $httpCode = $result['httpCode'];
+            $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
+            if ($httpCode != 200) {
+                $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 200!', 0);
+                return '';
+            }
         }
-        //Header
-        $string = "<table style='width: 100%; border-collapse: collapse;'>";
-        $string .= '<tr> <td><b> ' . $this->Translate('Date') . '</b></td> <td><b>' . $this->Translate('Action') . '</b></td> <td><b>Name</b></td> <td><b> ' . $this->Translate('Trigger') . '</b></td> </tr>';
-        //Log entries
         $log = [];
-        $logEntries = json_decode($result['body'], true);
-        foreach ($logEntries as $logEntry) {
-            if (array_key_exists('smartlockId', $logEntry)) {
-                if ($logEntry['smartlockId'] != $smartLockID) {
-                    continue;
-                } else {
-                    $log[] = $logEntry;
+        if (array_key_exists('body', $result)) {
+            $this->SendDebug(__FUNCTION__, 'Body: ' . $result['body'], 0);
+            //Header
+            $string = "<table style='width: 100%; border-collapse: collapse;'>";
+            $string .= '<tr> <td><b> ' . $this->Translate('Date') . '</b></td> <td><b>' . $this->Translate('Action') . '</b></td> <td><b>Name</b></td> <td><b> ' . $this->Translate('Trigger') . '</b></td> </tr>';
+            //Log entries
+            $logEntries = json_decode($result['body'], true);
+            foreach ($logEntries as $logEntry) {
+                if (array_key_exists('smartlockId', $logEntry)) {
+                    if ($logEntry['smartlockId'] != $smartLockID) {
+                        continue;
+                    } else {
+                        $log[] = $logEntry;
+                    }
+                }
+                //Date
+                if (array_key_exists('date', $logEntry)) {
+                    $date = $logEntry['date'];
+                    $date = new DateTime($date);
+                    $date->setTimezone(new DateTimeZone(date_default_timezone_get()));
+                    $date = $date->format('d.m.Y H:i:s');
+                }
+                //Action
+                if (array_key_exists('action', $logEntry)) {
+                    $action = $logEntry['action'];
+                    /*
+                     * API action:
+                     * 1    unlock
+                     * 2    lock
+                     * 3    unlatch
+                     * 4    lock'n'go
+                     * 5    lock'n'go with unlatch
+                     * 208  door warning ajar
+                     * 209  door warning status mismatch
+                     * 224  doorbell recognition (only Opener)
+                     * 240  door opened
+                     * 241  door closed
+                     * 242  door sensor jammed
+                     * 243  firmware update
+                     * 250  door log enabled
+                     * 251  door log disabled
+                     * 252  initialization
+                     * 253  calibration
+                     * 254  log enabled
+                     * 255  log disabled
+                     */
+                    switch ($action) {
+                        case 1:
+                            $action = $this->Translate('unlock');
+                            break;
+
+                        case 2:
+                            $action = $this->Translate('lock');
+                            break;
+
+                        case 3:
+                            $action = $this->Translate('unlatch');
+                            break;
+
+                        case 4:
+                            $action = $this->Translate("lock'n'go");
+                            break;
+
+                        case 5:
+                            $action = $this->Translate("lock'n'go with unlatch");
+                            break;
+
+                        case 208:
+                            $action = $this->Translate('door warning ajar');
+                            break;
+
+                        case 209:
+                            $action = $this->Translate('door warning status mismatch');
+                            break;
+
+                        case 224:
+                            $action = $this->Translate('doorbell recognition');
+                            break;
+
+                        case 240:
+                            $action = $this->Translate('door opened');
+                            break;
+
+                        case 241:
+                            $action = $this->Translate('door closed');
+                            break;
+
+                        case 242:
+                            $action = $this->Translate('door sensor jammed');
+                            break;
+
+                        case 243:
+                            $action = $this->Translate('firmware update');
+                            break;
+
+                        case 250:
+                            $action = $this->Translate('door log enabled');
+                            break;
+
+                        case 251:
+                            $action = $this->Translate('door log disabled');
+                            break;
+
+                        case 252:
+                            $action = $this->Translate('initialization');
+                            break;
+
+                        case 253:
+                            $action = $this->Translate('calibration');
+                            break;
+
+                        case 254:
+                            $action = $this->Translate('log enabled');
+                            break;
+
+                        case 255:
+                            $action = $this->Translate('log disabled');
+                            break;
+
+                        default:
+                            $action = $action . ' ' . $this->Translate('Unknown');
+                    }
+                }
+                //Name
+                if (array_key_exists('name', $logEntry)) {
+                    $name = $logEntry['name'];
+                    if (empty($name)) {
+                        $name = $this->Translate('Unknown');
+                    }
+                }
+                //Trigger
+                if (array_key_exists('trigger', $logEntry)) {
+                    $trigger = $logEntry['trigger'];
+                    /*
+                     * API trigger:
+                     * 0    system
+                     * 1    manual
+                     * 2    button
+                     * 3    automatic
+                     * 4    web
+                     * 5    app
+                     * 6    auto lock
+                     * 7    accessory
+                     * 255  keypad
+                     */
+                    switch ($trigger) {
+                        case 0:
+                            $trigger = $this->Translate('system');
+                            break;
+
+                        case 1:
+                            $trigger = $this->Translate('manual');
+                            break;
+
+                        case 2:
+                            $trigger = $this->Translate('button');
+                            break;
+
+                        case 3:
+                            $trigger = $this->Translate('automatic');
+                            break;
+
+                        case 4:
+                            $trigger = $this->Translate('web');
+                            break;
+
+                        case 5:
+                            $trigger = $this->Translate('app');
+                            break;
+
+                        case 6:
+                            $trigger = $this->Translate('auto lock');
+                            break;
+
+                        case 7:
+                            $trigger = $this->Translate('accessory');
+                            break;
+
+                        case 255:
+                            $trigger = $this->Translate('keypad');
+                            break;
+
+                        default:
+                            $trigger = $this->Translate('Unknown');
+                    }
+                }
+                if (isset($date) && isset($action) && isset($name) && isset($trigger)) {
+                    $string .= '<tr><td>' . $date . '</td><td>' . $action . '</td><td>' . $name . '</td><td>' . $trigger . '</td></tr>';
                 }
             }
-            //Date
-            if (array_key_exists('date', $logEntry)) {
-                $date = $logEntry['date'];
-                $date = new DateTime($date);
-                $date->setTimezone(new DateTimeZone(date_default_timezone_get()));
-                $date = $date->format('d.m.Y H:i:s');
+            $string .= '</table>';
+            if ($Update) {
+                $this->SetValue('ActivityLog', $string);
             }
-            //Action
-            if (array_key_exists('action', $logEntry)) {
-                $action = $logEntry['action'];
-                /*
-                 * API action:
-                 * 1    unlock
-                 * 2    lock
-                 * 3    unlatch
-                 * 4    lock'n'go
-                 * 5    lock'n'go with unlatch
-                 * 208  door warning ajar
-                 * 209  door warning status mismatch
-                 * 224  doorbell recognition (only Opener)
-                 * 240  door opened
-                 * 241  door closed
-                 * 242  door sensor jammed
-                 * 243  firmware update
-                 * 250  door log enabled
-                 * 251  door log disabled
-                 * 252  initialization
-                 * 253  calibration
-                 * 254  log enabled
-                 * 255  log disabled
-                 */
-                switch ($action) {
-                    case 1:
-                        $action = $this->Translate('unlock');
-                        break;
-
-                    case 2:
-                        $action = $this->Translate('lock');
-                        break;
-
-                    case 3:
-                        $action = $this->Translate('unlatch');
-                        break;
-
-                    case 4:
-                        $action = $this->Translate("lock'n'go");
-                        break;
-
-                    case 5:
-                        $action = $this->Translate("lock'n'go with unlatch");
-                        break;
-
-                    case 208:
-                        $action = $this->Translate('door warning ajar');
-                        break;
-
-                    case 209:
-                        $action = $this->Translate('door warning status mismatch');
-                        break;
-
-                    case 224:
-                        $action = $this->Translate('doorbell recognition');
-                        break;
-
-                    case 240:
-                        $action = $this->Translate('door opened');
-                        break;
-
-                    case 241:
-                        $action = $this->Translate('door closed');
-                        break;
-
-                    case 242:
-                        $action = $this->Translate('door sensor jammed');
-                        break;
-
-                    case 243:
-                        $action = $this->Translate('firmware update');
-                        break;
-
-                    case 250:
-                        $action = $this->Translate('door log enabled');
-                        break;
-
-                    case 251:
-                        $action = $this->Translate('door log disabled');
-                        break;
-
-                    case 252:
-                        $action = $this->Translate('initialization');
-                        break;
-
-                    case 253:
-                        $action = $this->Translate('calibration');
-                        break;
-
-                    case 254:
-                        $action = $this->Translate('log enabled');
-                        break;
-
-                    case 255:
-                        $action = $this->Translate('log disabled');
-                        break;
-
-                    default:
-                        $action = $action . ' ' . $this->Translate('Unknown');
-                }
-            }
-            //Name
-            if (array_key_exists('name', $logEntry)) {
-                $name = $logEntry['name'];
-                if (empty($name)) {
-                    $name = $this->Translate('Unknown');
-                }
-            }
-            //Trigger
-            if (array_key_exists('trigger', $logEntry)) {
-                $trigger = $logEntry['trigger'];
-                /*
-                 * API trigger:
-                 * 0    system
-                 * 1    manual
-                 * 2    button
-                 * 3    automatic
-                 * 4    web
-                 * 5    app
-                 * 6    auto lock
-                 * 7    accessory
-                 * 255  keypad
-                 */
-                switch ($trigger) {
-                    case 0:
-                        $trigger = $this->Translate('system');
-                        break;
-
-                    case 1:
-                        $trigger = $this->Translate('manual');
-                        break;
-
-                    case 2:
-                        $trigger = $this->Translate('button');
-                        break;
-
-                    case 3:
-                        $trigger = $this->Translate('automatic');
-                        break;
-
-                    case 4:
-                        $trigger = $this->Translate('web');
-                        break;
-
-                    case 5:
-                        $trigger = $this->Translate('app');
-                        break;
-
-                    case 6:
-                        $trigger = $this->Translate('auto lock');
-                        break;
-
-                    case 7:
-                        $trigger = $this->Translate('accessory');
-                        break;
-
-                    case 255:
-                        $trigger = $this->Translate('keypad');
-                        break;
-
-                    default:
-                        $trigger = $this->Translate('Unknown');
-                }
-            }
-            if (isset($date) && isset($action) && isset($name) && isset($trigger)) {
-                $string .= '<tr><td>' . $date . '</td><td>' . $action . '</td><td>' . $name . '</td><td>' . $trigger . '</td></tr>';
-            }
-        }
-        $string .= '</table>';
-        if ($Update) {
-            $this->SetValue('ActivityLog', $string);
         }
         return json_encode($log);
     }
@@ -660,29 +720,15 @@ class NukiSmartLockWebAPI extends IPSModule
         $data = json_encode($data);
         $this->SendDebug(__FUNCTION__, 'Data: ' . $data, 0);
         $result = json_decode($this->SendDataToParent($data), true);
-        $httpCode = $result['httpCode'];
-        $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
-        if ($httpCode != 204) {
-            $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 204!', 0);
+        if (array_key_exists('httpCode', $result)) {
+            $httpCode = $result['httpCode'];
+            $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
+            if ($httpCode != 204) {
+                $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 204!', 0);
+            }
         }
-        $this->SetTimerInterval('Update', 10000);
-    }
-
-    #################### Request Action
-
-    public function RequestAction($Ident, $Value): void
-    {
-        switch ($Ident) {
-            case 'SmartLock':
-                $this->SetSmartLockAction($Value);
-                break;
-
-            case 'SmartLockLED':
-            case 'Brightness':
-                $this->SetValue($Ident, $Value);
-                $this->UpdateConfig();
-                break;
-
+        if (!$this->ReadPropertyBoolean('UseAutomaticUpdate')) {
+            $this->SetTimerInterval('Update', 10000);
         }
     }
 
@@ -741,11 +787,15 @@ class NukiSmartLockWebAPI extends IPSModule
         $data['Buffer'] = $buffer;
         $data = json_encode($data);
         $result = json_decode($this->SendDataToParent($data), true);
-        $httpCode = $result['httpCode'];
-        $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
-        if ($httpCode != 204) {
-            $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 204!', 0);
+        if (array_key_exists('httpCode', $result)) {
+            $httpCode = $result['httpCode'];
+            $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
+            if ($httpCode != 204) {
+                $this->SendDebug(__FUNCTION__, 'Abort, result http code: ' . $httpCode . ', must be 204!', 0);
+            }
         }
-        $this->SetTimerInterval('Update', 10000);
+        if (!$this->ReadPropertyBoolean('UseAutomaticUpdate')) {
+            $this->SetTimerInterval('Update', 10000);
+        }
     }
 }

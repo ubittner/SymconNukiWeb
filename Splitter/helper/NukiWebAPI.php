@@ -17,6 +17,19 @@ trait NukiWebAPI
     }
 
     /**
+     * Get information about a specific smartlock
+     * @param string $SmartLockID
+     * @return string
+     */
+    public function GetSmartLock(string $SmartLockID): string
+    {
+        $endpoint = 'https://api.nuki.io/smartlock/' . $SmartLockID;
+        $result = $this->SendDataToNukiWeb($endpoint, 'GET', '');
+        $this->SendDebug(__FUNCTION__, 'Result: ' . $result, 0);
+        return $result;
+    }
+
+    /**
      * Updates a smartlock config
      * @param string $SmartLockID
      * @param string $Config
@@ -91,6 +104,51 @@ trait NukiWebAPI
         return $result;
     }
 
+    ########## Webhook
+
+    /**
+     * Get all registered decentral webhooks from nuki web
+     * @return string
+     */
+    public function GetDecentralWebHooks(): string
+    {
+        $endpoint = 'https://api.nuki.io/api/decentralWebhook';
+        $result = $this->SendDataToNukiWeb($endpoint, 'GET', '');
+        $this->SendDebug(__FUNCTION__, 'Result: ' . $result, 0);
+        return $result;
+    }
+
+    /**
+     * Creates a decentral webhook on nuki web
+     * @param string $WebhookURL
+     * @param string $WebhookFeatures (must be json_encoded)
+     * @return string
+     */
+    public function CreateDecentralWebhook(string $WebhookURL, string $WebhookFeatures): string
+    {
+        $this->SendDebug(__FUNCTION__, 'Webhook URL: ' . $WebhookURL, 0);
+        $this->SendDebug(__FUNCTION__, 'Webhook Features: ' . $WebhookFeatures, 0);
+        $endpoint = 'https://api.nuki.io/api/decentralWebhook';
+        $postfields = json_encode(['webhookUrl' => $WebhookURL, 'webhookFeatures' => json_decode($WebhookFeatures)]);
+        $result = $this->SendDataToNukiWeb($endpoint, 'PUT', $postfields);
+        $this->SendDebug(__FUNCTION__, 'Result: ' . $result, 0);
+        return $result;
+    }
+
+    /**
+     * Deletes a decentral webhook from nuki web
+     * @param int $WebhookID
+     * @return string
+     */
+    public function DeleteDecentralWebhook(int $WebhookID): string
+    {
+        $this->SendDebug(__FUNCTION__, 'Webhook ID: ' . $WebhookID, 0);
+        $endpoint = 'https://api.nuki.io/api/decentralWebhook/' . $WebhookID;
+        $result = $this->SendDataToNukiWeb($endpoint, 'DELETE', '');
+        $this->SendDebug(__FUNCTION__, 'Result: ' . $result, 0);
+        return $result;
+    }
+
     #################### Private
 
     public function SendDataToNukiWeb(string $Endpoint, string $CustomRequest, string $Postfields): string
@@ -98,11 +156,10 @@ trait NukiWebAPI
         $this->SendDebug(__FUNCTION__, 'Endpoint: ' . $Endpoint, 0);
         $this->SendDebug(__FUNCTION__, 'CustomRequest: ' . $CustomRequest, 0);
         $result = [];
-        $accessToken = $this->ReadPropertyString('APIToken');
+        $accessToken = $this->FetchAccessToken();
         if (empty($accessToken)) {
             return json_encode($result);
         }
-        $httpCode = 0;
         $body = '';
         $timeout = round($this->ReadPropertyInteger('Timeout') / 1000);
         //Send data to endpoint
@@ -120,8 +177,8 @@ trait NukiWebAPI
                 'Authorization: Bearer ' . $accessToken,
                 'Content-Type: application/json']]);
         $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
         if (!curl_errno($ch)) {
-            $httpCode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
             $this->SendDebug(__FUNCTION__, 'Response http code: ' . $httpCode, 0);
             switch ($httpCode) {
                 case 200:  # OK
