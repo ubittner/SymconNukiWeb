@@ -444,13 +444,14 @@ class NukiOpenerWebAPI extends IPSModule
                     if (array_key_exists('state', $openerData)) {
                         if (array_key_exists('state', $openerData['state'])) {
                             $deviceState = $openerData['state']['state'];
-                            if ($deviceState == 3) {
+                            if ($deviceState == 3) { # 3 =  ring to open active
                                 $ringToOpenState = true;
                             }
                         }
                         if (array_key_exists('mode', $openerData['state'])) {
-                            if ($openerData['state']['mode'] == 3) {
+                            if ($openerData['state']['mode'] == 3) { # 3 = continuous
                                 $continousModeState = true;
+                                $ringToOpenState = true;
                                 $deviceState = 3;
                             }
                         }
