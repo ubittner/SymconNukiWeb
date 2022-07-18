@@ -118,6 +118,7 @@ class NukiConfiguratorWebAPI extends IPSModule
                     $name = $device['name'];
                     switch ($deviceType) {
                         case 0: # Smart Lock
+                        case 4: # Smart Lock 3.0 Pro
                             $instanceID = $this->GetDeviceInstances($smartLockID, 0);
                             $values[] = [
                                 'SmartLockID'        => $smartLockID,
