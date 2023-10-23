@@ -1,5 +1,6 @@
 <?php
 
+/** @noinspection PhpUndefinedFieldInspection */
 /** @noinspection DuplicatedCode */
 /** @noinspection PhpUnused */
 
@@ -38,7 +39,7 @@ trait Helper_webOAuth
      *
      * @throws Exception
      */
-    protected function ProcessOAuthData(): mixed
+    protected function ProcessOAuthData(): void
     {
         //Let's assume requests via GET are for code exchange.
         if ($_SERVER['REQUEST_METHOD'] == 'GET') {
@@ -54,7 +55,6 @@ trait Helper_webOAuth
             //Just print raw post data!
             echo file_get_contents('php://input');
         }
-        return;
     }
 
     #################### Private

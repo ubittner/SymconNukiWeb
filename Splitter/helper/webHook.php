@@ -1,5 +1,6 @@
 <?php
 
+/** @noinspection PhpUndefinedFieldInspection */
 /** @noinspection PhpUndefinedFunctionInspection */
 /** @noinspection PhpUnused */
 
