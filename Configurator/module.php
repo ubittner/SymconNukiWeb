@@ -16,9 +16,6 @@ class NukiConfiguratorWebAPI extends IPSModuleStrict
         //Never delete this line!
         parent::Create();
 
-        //Properties
-        $this->RegisterPropertyInteger('CategoryID', 0);
-
         //Connect to parent (Nuki Web Splitter)
         $this->ConnectParent('{DA16C1AA-0AFE-65B6-1A0C-5761A08A0FF8}');
     }
@@ -65,20 +62,6 @@ class NukiConfiguratorWebAPI extends IPSModuleStrict
         $this->ApplyChanges();
     }
 
-    private function GetCategoryPath(int $CategoryID): array
-    {
-        if ($CategoryID === 0) {
-            return [];
-        }
-        $path[] = IPS_GetName($CategoryID);
-        $parentID = IPS_GetObject($CategoryID)['ParentID'];
-        while ($parentID > 0) {
-            $path[] = IPS_GetName($parentID);
-            $parentID = IPS_GetObject($parentID)['ParentID'];
-        }
-        return array_reverse($path);
-    }
-
     /**
      * @throws Exception
      */
@@ -88,7 +71,6 @@ class NukiConfiguratorWebAPI extends IPSModuleStrict
         if (!$this->HasActiveParent()) {
             return $values;
         }
-        $location = $this->GetCategoryPath($this->ReadPropertyInteger(('CategoryID')));
         $data = [];
         $buffer = [];
         $data['DataID'] = '{7F9C82E4-FF89-7856-2F13-E5A1992167D6}';
@@ -133,8 +115,7 @@ class NukiConfiguratorWebAPI extends IPSModuleStrict
                                         'AccountID'   => (string) $accountID,
                                         'AuthID'      => (string) $authID,
                                         'Name'        => (string) $name
-                                    ],
-                                    'location' => $location
+                                    ]
                                 ]
                             ];
                             break;
@@ -158,8 +139,7 @@ class NukiConfiguratorWebAPI extends IPSModuleStrict
                                         'AccountID' => (string) $accountID,
                                         'AuthID' => (string) $authID,
                                         'Name' => (string) $name
-                                    ],
-                                    'location' => $location
+                                    ]
                                 ]
                                  */
                             ];
@@ -183,8 +163,7 @@ class NukiConfiguratorWebAPI extends IPSModuleStrict
                                         'AccountID'   => (string) $accountID,
                                         'AuthID'      => (string) $authID,
                                         'Name'        => (string) $name
-                                    ],
-                                    'location' => $location
+                                    ]
                                 ]
                             ];
                             break;
@@ -208,8 +187,7 @@ class NukiConfiguratorWebAPI extends IPSModuleStrict
                                         'AccountID' => (string) $accountID,
                                         'AuthID' => (string) $authID,
                                         'Name' => (string) $name
-                                    ],
-                                    'location' => $location
+                                    ]
                                 ]
                                  */
                             ];
