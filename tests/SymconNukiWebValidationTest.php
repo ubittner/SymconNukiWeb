@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 include_once __DIR__ . '/stubs/Validator.php';
 
-class SymconNukiBridgeValidationTest extends TestCaseSymconValidation
+class SymconNukiWebValidationTest extends TestCaseSymconValidation
 {
     public function testValidateSymconNukiWeb(): void
     {
