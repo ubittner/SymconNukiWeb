@@ -1,17 +1,18 @@
 <?php
 
+/** @noinspection PhpUndefinedFieldInspection */
 /** @noinspection DuplicatedCode */
 /** @noinspection PhpUnused */
 
 declare(strict_types=1);
 
-class NukiOpenerWebAPI extends IPSModule
+class NukiOpenerWebAPI extends IPSModuleStrict
 {
     //Constants
     private const LIBRARY_GUID = '{8CDE2F20-ECBF-F12E-45AC-B8A7F36CBBFC}';
     private const MODULE_PREFIX = 'NUKIOW';
 
-    public function Create()
+    public function Create(): void
     {
         //Never delete this line!
         parent::Create();
@@ -58,7 +59,7 @@ class NukiOpenerWebAPI extends IPSModule
         IPS_SetVariableProfileAssociation($profile, 256, $this->Translate('Unknown'), 'Information', -1);
         $id = @$this->GetIDForIdent('DeviceState');
         $this->RegisterVariableInteger('DeviceState', $this->Translate('Device state'), $profile, 100);
-        if ($id == false) {
+        if (!$id) {
             $this->SetValue('DeviceState', 256);
         }
 
@@ -78,7 +79,7 @@ class NukiOpenerWebAPI extends IPSModule
         $id = @$this->GetIDForIdent('RingToOpen');
         $this->RegisterVariableBoolean('RingToOpen', 'Ring to Open', '~Switch', 200);
         $this->EnableAction('RingToOpen');
-        if ($id == false) {
+        if (!$id) {
             IPS_SetIcon($this->GetIDForIdent('RingToOpen'), 'Alert');
         }
 
@@ -102,15 +103,15 @@ class NukiOpenerWebAPI extends IPSModule
         $id = @$this->GetIDForIdent('OneTimeAccess');
         $this->RegisterVariableBoolean('OneTimeAccess', $this->Translate('One time access'), '~Switch', 220);
         $this->EnableAction('OneTimeAccess');
-        if ($id == false) {
+        if (!$id) {
             IPS_SetIcon($this->GetIDForIdent('OneTimeAccess'), 'Door');
         }
 
-        //Continous mode
+        //Continuous mode
         $id = @$this->GetIDForIdent('ContinuousMode');
         $this->RegisterVariableBoolean('ContinuousMode', $this->Translate('Continuous mode'), '~Switch', 230);
         $this->EnableAction('ContinuousMode');
-        if ($id == false) {
+        if (!$id) {
             IPS_SetIcon($this->GetIDForIdent('ContinuousMode'), 'Door');
         }
 
@@ -120,7 +121,7 @@ class NukiOpenerWebAPI extends IPSModule
         $id = @$this->GetIDForIdent('RingSuppressionRing');
         $this->RegisterVariableBoolean('RingSuppressionRing', $this->Translate('Ring suppression Ring'), '~Switch', 300);
         $this->EnableAction('RingSuppressionRing');
-        if ($id == false) {
+        if (!$id) {
             IPS_SetIcon($this->GetIDForIdent('RingSuppressionRing'), 'Alert');
         }
 
@@ -128,15 +129,15 @@ class NukiOpenerWebAPI extends IPSModule
         $id = @$this->GetIDForIdent('RingSuppressionRingToOpen');
         $this->RegisterVariableBoolean('RingSuppressionRingToOpen', $this->Translate('Ring suppression Ring to Open'), '~Switch', 310);
         $this->EnableAction('RingSuppressionRingToOpen');
-        if ($id == false) {
+        if (!$id) {
             IPS_SetIcon($this->GetIDForIdent('RingSuppressionRingToOpen'), 'Alert');
         }
 
-        //Ring suppression continous mode
+        //Ring suppression continuous mode
         $id = @$this->GetIDForIdent('RingSuppressionContinuousMode');
         $this->RegisterVariableBoolean('RingSuppressionContinuousMode', $this->Translate('Ring suppression continuous mode'), '~Switch', 320);
         $this->EnableAction('RingSuppressionContinuousMode');
-        if ($id == false) {
+        if (!$id) {
             IPS_SetIcon($this->GetIDForIdent('RingSuppressionContinuousMode'), 'Alert');
         }
 
@@ -211,7 +212,7 @@ class NukiOpenerWebAPI extends IPSModule
         $id = @$this->GetIDForIdent('OpenerLED');
         $this->RegisterVariableBoolean('OpenerLED', $this->Translate('LED signal on the Opener'), '~Switch', 500);
         $this->EnableAction('OpenerLED');
-        if ($id == false) {
+        if (!$id) {
             IPS_SetIcon($this->GetIDForIdent('OpenerLED'), 'Bulb');
         }
 
@@ -229,7 +230,7 @@ class NukiOpenerWebAPI extends IPSModule
         $this->ConnectParent('{DA16C1AA-0AFE-65B6-1A0C-5761A08A0FF8}');
     }
 
-    public function Destroy()
+    public function Destroy(): void
     {
         //Never delete this line!
         parent::Destroy();
@@ -244,7 +245,10 @@ class NukiOpenerWebAPI extends IPSModule
         }
     }
 
-    public function ApplyChanges()
+    /**
+     * @throws Exception
+     */
+    public function ApplyChanges(): void
     {
         //Wait until IP-Symcon is started
         $this->RegisterMessage(0, IPS_KERNELSTARTED);
@@ -263,7 +267,7 @@ class NukiOpenerWebAPI extends IPSModule
         if ($this->ReadPropertyBoolean('UseActivityLog')) {
             $id = @$this->GetIDForIdent('ActivityLog');
             $this->MaintainVariable('ActivityLog', $this->Translate('Activity log'), 3, 'HTMLBox', 600, true);
-            if ($id == false) {
+            if (!$id) {
                 IPS_SetIcon($this->GetIDForIdent('ActivityLog'), 'Database');
             }
         } else {
@@ -273,7 +277,10 @@ class NukiOpenerWebAPI extends IPSModule
         $this->UpdateData();
     }
 
-    public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
+    /**
+     * @throws Exception
+     */
+    public function MessageSink($TimeStamp, $SenderID, $Message, $Data): void
     {
         $this->SendDebug(__FUNCTION__, $TimeStamp . ', SenderID: ' . $SenderID . ', Message: ' . $Message . ', Data: ' . print_r($Data, true), 0);
         if (!empty($Data)) {
@@ -281,31 +288,30 @@ class NukiOpenerWebAPI extends IPSModule
                 $this->SendDebug(__FUNCTION__, 'Data[' . $key . '] = ' . json_encode($value), 0);
             }
         }
-        switch ($Message) {
-            case IPS_KERNELSTARTED:
-                $this->KernelReady();
-                break;
-
+        if ($Message == IPS_KERNELSTARTED) {
+            $this->KernelReady();
         }
     }
 
-    public function GetConfigurationForm()
+    public function GetConfigurationForm(): string
     {
         $formData = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
         //Version info
         $library = IPS_GetLibrary(self::LIBRARY_GUID);
-        $version = 'Version: ' . $library['Version'] . '-' . $library['Build'] . ' vom ' . date('d.m.Y', $library['Date']);
-        $formData['elements'][2]['caption'] = $version;
+        $formData['elements'][2]['caption'] = 'ID: ' . $this->InstanceID . ', Version: ' . $library['Version'] . '-' . $library['Build'] . ', ' . date('d.m.Y', $library['Date']);
         return json_encode($formData);
     }
 
-    public function ReceiveData($JSONString)
+    /**
+     * @throws Exception
+     */
+    public function ReceiveData($JSONString): string
     {
         //Received data from splitter
         $this->SendDebug(__FUNCTION__, 'Incoming data: ' . $JSONString, 0);
         if (!$this->ReadPropertyBoolean('UseAutomaticUpdate')) {
             $this->SendDebug(__FUNCTION__, 'Abort, automatic update is disabled!', 0);
-            return;
+            return '';
         }
         $data = json_decode($JSONString);
         $this->SendDebug(__FUNCTION__, 'Buffer data:  ' . json_encode($data->Buffer), 0);
@@ -342,10 +348,14 @@ class NukiOpenerWebAPI extends IPSModule
                     $this->SendDebug(__FUNCTION__, 'Abort, unknown Parameter!', 0);
             }
         }
+        return '';
     }
 
     #################### Request Action
 
+    /**
+     * @throws Exception
+     */
     public function RequestAction($Ident, $Value): void
     {
         switch ($Ident) {
@@ -379,17 +389,22 @@ class NukiOpenerWebAPI extends IPSModule
                 $this->SetValue($Ident, $Value);
                 $this->UpdateConfig();
                 break;
-
         }
     }
 
     #################### Public methods
 
+    /**
+     * @throws Exception
+     */
     public function GetDeviceType(): int
     {
         return $this->ReadAttributeInteger('Type');
     }
 
+    /**
+     * @throws Exception
+     */
     public function UpdateData(): void
     {
         $this->SetTimerInterval('Update', 0);
@@ -398,6 +413,9 @@ class NukiOpenerWebAPI extends IPSModule
         $this->SetTimerInterval('Update', $this->ReadPropertyInteger('UpdateInterval') * 1000);
     }
 
+    /**
+     * @throws Exception
+     */
     public function GetOpenerData(bool $Update): string
     {
         $openerData = '';
@@ -546,6 +564,9 @@ class NukiOpenerWebAPI extends IPSModule
         return json_encode($openerData);
     }
 
+    /**
+     * @throws Exception
+     */
     public function GetActivityLog(bool $Update): string
     {
         $smartLockID = $this->ReadPropertyString('SmartLockID');
@@ -629,82 +650,27 @@ class NukiOpenerWebAPI extends IPSModule
                      * 254  log enabled
                      * 255  log disabled
                      */
-                    switch ($action) {
-                        case 1:
-                            $action = $this->Translate('unlock');
-                            break;
-
-                        case 2:
-                            $action = $this->Translate('lock');
-                            break;
-
-                        case 3:
-                            $action = $this->Translate('unlatch');
-                            break;
-
-                        case 4:
-                            $action = $this->Translate("lock'n'go");
-                            break;
-
-                        case 5:
-                            $action = $this->Translate("lock'n'go with unlatch");
-                            break;
-
-                        case 208:
-                            $action = $this->Translate('door warning ajar');
-                            break;
-
-                        case 209:
-                            $action = $this->Translate('door warning status mismatch');
-                            break;
-
-                        case 224:
-                            $action = $this->Translate('doorbell recognition');
-                            break;
-
-                        case 240:
-                            $action = $this->Translate('door opened');
-                            break;
-
-                        case 241:
-                            $action = $this->Translate('door closed');
-                            break;
-
-                        case 242:
-                            $action = $this->Translate('door sensor jammed');
-                            break;
-
-                        case 243:
-                            $action = $this->Translate('firmware update');
-                            break;
-
-                        case 250:
-                            $action = $this->Translate('door log enabled');
-                            break;
-
-                        case 251:
-                            $action = $this->Translate('door log disabled');
-                            break;
-
-                        case 252:
-                            $action = $this->Translate('initialization');
-                            break;
-
-                        case 253:
-                            $action = $this->Translate('calibration');
-                            break;
-
-                        case 254:
-                            $action = $this->Translate('log enabled');
-                            break;
-
-                        case 255:
-                            $action = $this->Translate('log disabled');
-                            break;
-
-                        default:
-                            $action = $action . ' ' . $this->Translate('Unknown');
-                    }
+                    $action = match ($action) {
+                        1       => $this->Translate('unlock'),
+                        2       => $this->Translate('lock'),
+                        3       => $this->Translate('unlatch'),
+                        4       => $this->Translate("lock'n'go"),
+                        5       => $this->Translate("lock'n'go with unlatch"),
+                        208     => $this->Translate('door warning ajar'),
+                        209     => $this->Translate('door warning status mismatch'),
+                        224     => $this->Translate('doorbell recognition'),
+                        240     => $this->Translate('door opened'),
+                        241     => $this->Translate('door closed'),
+                        242     => $this->Translate('door sensor jammed'),
+                        243     => $this->Translate('firmware update'),
+                        250     => $this->Translate('door log enabled'),
+                        251     => $this->Translate('door log disabled'),
+                        252     => $this->Translate('initialization'),
+                        253     => $this->Translate('calibration'),
+                        254     => $this->Translate('log enabled'),
+                        255     => $this->Translate('log disabled'),
+                        default => $action . ' ' . $this->Translate('Unknown'),
+                    };
                 }
                 //Name
                 if (array_key_exists('name', $logEntry)) {
@@ -728,46 +694,18 @@ class NukiOpenerWebAPI extends IPSModule
                      * 7    accessory
                      * 255  keypad
                      */
-                    switch ($trigger) {
-                        case 0:
-                            $trigger = $this->Translate('system');
-                            break;
-
-                        case 1:
-                            $trigger = $this->Translate('manual');
-                            break;
-
-                        case 2:
-                            $trigger = $this->Translate('button');
-                            break;
-
-                        case 3:
-                            $trigger = $this->Translate('automatic');
-                            break;
-
-                        case 4:
-                            $trigger = $this->Translate('web');
-                            break;
-
-                        case 5:
-                            $trigger = $this->Translate('app');
-                            break;
-
-                        case 6:
-                            $trigger = $this->Translate('auto lock');
-                            break;
-
-                        case 7:
-                            $trigger = $this->Translate('accessory');
-                            break;
-
-                        case 255:
-                            $trigger = $this->Translate('keypad');
-                            break;
-
-                        default:
-                            $trigger = $this->Translate('Unknown');
-                    }
+                    $trigger = match ($trigger) {
+                        0       => $this->Translate('system'),
+                        1       => $this->Translate('manual'),
+                        2       => $this->Translate('button'),
+                        3       => $this->Translate('automatic'),
+                        4       => $this->Translate('web'),
+                        5       => $this->Translate('app'),
+                        6       => $this->Translate('auto lock'),
+                        7       => $this->Translate('accessory'),
+                        255     => $this->Translate('keypad'),
+                        default => $this->Translate('Unknown'),
+                    };
                 }
                 if (isset($date) && isset($action) && isset($name) && isset($trigger)) {
                     $string .= '<tr><td>' . $date . '</td><td>' . $action . '</td><td>' . $name . '</td><td>' . $trigger . '</td></tr>';
@@ -781,6 +719,9 @@ class NukiOpenerWebAPI extends IPSModule
         return json_encode($log);
     }
 
+    /**
+     * @throws Exception
+     */
     public function OpenDoor(): void
     {
         $smartLockID = $this->ReadPropertyString('SmartLockID');
@@ -816,6 +757,9 @@ class NukiOpenerWebAPI extends IPSModule
         }
     }
 
+    /**
+     * @throws Exception
+     */
     public function ToggleRingToOpen(bool $State): void
     {
         $smartLockID = $this->ReadPropertyString('SmartLockID');
@@ -867,6 +811,9 @@ class NukiOpenerWebAPI extends IPSModule
         }
     }
 
+    /**
+     * @throws Exception
+     */
     public function ToggleContinuousMode(bool $State): void
     {
         $smartLockID = $this->ReadPropertyString('SmartLockID');
@@ -920,11 +867,17 @@ class NukiOpenerWebAPI extends IPSModule
 
     #################### Private methods
 
+    /**
+     * @throws Exception
+     */
     private function KernelReady(): void
     {
         $this->ApplyChanges();
     }
 
+    /**
+     * @throws Exception
+     */
     private function UpdateConfig(): void
     {
         $smartLockID = $this->ReadPropertyString('SmartLockID');
@@ -976,6 +929,9 @@ class NukiOpenerWebAPI extends IPSModule
         }
     }
 
+    /**
+     * @throws Exception
+     */
     private function UpdateAdvanceConfig(): void
     {
         $smartLockID = $this->ReadPropertyString('SmartLockID');

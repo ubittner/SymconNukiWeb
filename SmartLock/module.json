@@ -1,18 +1,18 @@
 {
-  "id": "{48C163A9-C871-88EB-2717-26A195E3E476}",
-  "name": "Nuki Smart Lock Web API",
-  "type": 3,
-  "vendor": "NUKI",
-  "aliases": [
-    "Nuki Smart Lock Web API"
-  ],
-  "url": "https://github.com/ubittner/SymconNukiWeb",
-  "parentRequirements": [
-    "{7F9C82E4-FF89-7856-2F13-E5A1992167D6}"
-  ],
-  "childRequirements": [],
-  "implemented": [
-    "{6BD0D007-1A06-4F3F-1896-84E2BBFB4B09}"
-  ],
-  "prefix": "NUKISLW"
+    "id": "{48C163A9-C871-88EB-2717-26A195E3E476}",
+    "name": "Nuki Smart Lock Web API",
+    "type": 3,
+    "vendor": "NUKI",
+    "aliases": [
+        "Nuki Smart Lock Web API"
+    ],
+    "url": "https://github.com/ubittner/SymconNukiWeb",
+    "parentRequirements": [
+        "{7F9C82E4-FF89-7856-2F13-E5A1992167D6}"
+    ],
+    "childRequirements": [],
+    "implemented": [
+        "{6BD0D007-1A06-4F3F-1896-84E2BBFB4B09}"
+    ],
+    "prefix": "NUKISLW"
 }

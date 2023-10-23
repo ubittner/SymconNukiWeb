@@ -1,13 +1,14 @@
 [![Image](imgs/NUKI_Logo.png)](https://nuki.io/de/)
 
-[![IP-Symcon is awesome!](https://img.shields.io/badge/IP--Symcon-6.0-blue.svg)](https://www.symcon.de)
-[![Module Version](https://img.shields.io/badge/Module_Version-2.0-blue.svg)]()
-[![Module Build](https://img.shields.io/badge/Module_Build-2-blue.svg)]()
-[![Module Date](https://img.shields.io/badge/Module_Date-20220718-blue.svg)]()  
-[![Version](https://img.shields.io/badge/Nuki_Web_API_Version-1.4.0-yellow.svg)]()  
-[![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)  
+[![IP-Symcon is awesome!](https://img.shields.io/badge/IP--Symcon-7.0-blue.svg)](https://www.symcon.de)
+[![PHP is awesome!](https://img.shields.io/badge/php-8.2.5-777bb3.svg?logo=php&logoColor=white&labelColor=555555)](https://www.php.net)
 [![Check Style](https://github.com/ubittner/SymconNukiWeb/workflows/Check%20Style/badge.svg)](https://github.com/ubittner/SymconNukiWeb/actions)
 [![Run Tests](https://github.com/ubittner/SymconNukiWeb/workflows/Run%20Tests/badge.svg)](https://github.com/ubittner/SymconNukiWeb/actions)  
+[![Module Version](https://img.shields.io/badge/Module_Version-2.0-blue.svg)]()
+[![Module Build](https://img.shields.io/badge/Module_Build-4-blue.svg)]()
+[![Module Date](https://img.shields.io/badge/Module_Date-20231023_(23.10.2023)-blue.svg)]()  
+[![Version](https://img.shields.io/badge/Nuki_Web_API_Version-1.4.0-yellow.svg)]()  
+[![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
 Dieses Repository integriert Nuki Geräte in [IP-Symcon](https://www.symcon.de) mittels der [Nuki Web API](https://developer.nuki.io/page/nuki-web-api-1-4/3).  
 

@@ -58,11 +58,11 @@ Die Instanz wurde erfolgreich registriert
 
 __Konfigurationsseite__:
 
-Name                    | Beschreibung
------------------------ | ------------------
-Aktiv                   | Schaltet den Splitter in- bzw. aktiv
-Status aktualisieren    | Aktualisiert automatisch die Statusdaten der Geräte
-Timeout                 | Netzwerk Timeout
+| Name                 | Beschreibung                                        |
+|----------------------|-----------------------------------------------------|
+| Aktiv                | Schaltet den Splitter in- bzw. aktiv                |
+| Status aktualisieren | Aktualisiert automatisch die Statusdaten der Geräte |
+| Timeout              | Netzwerk Timeout                                    |
 
 ### 5. Statusvariablen und Profile
 

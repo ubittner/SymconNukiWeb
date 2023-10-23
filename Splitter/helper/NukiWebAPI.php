@@ -7,6 +7,7 @@ trait NukiWebAPI
     /**
      * Get a list of smartlocks
      * @return string
+     * @throws Exception
      */
     public function GetSmartLocks(): string
     {
@@ -20,6 +21,7 @@ trait NukiWebAPI
      * Get information about a specific smartlock
      * @param string $SmartLockID
      * @return string
+     * @throws Exception
      */
     public function GetSmartLock(string $SmartLockID): string
     {
@@ -34,6 +36,7 @@ trait NukiWebAPI
      * @param string $SmartLockID
      * @param string $Config
      * @return string
+     * @throws Exception
      */
     public function UpdateSmartLockConfig(string $SmartLockID, string $Config): string
     {
@@ -49,6 +52,7 @@ trait NukiWebAPI
      * @param string $SmartLockID
      * @param string $Config
      * @return string
+     * @throws Exception
      */
     public function UpdateOpenerAdvancedConfig(string $SmartLockID, string $Config): string
     {
@@ -65,6 +69,7 @@ trait NukiWebAPI
      * @param int $Action
      * @param int $Option
      * @return string
+     * @throws Exception
      */
     public function SetSmartLockAction(string $SmartLockID, int $Action, int $Option): string
     {
@@ -90,6 +95,7 @@ trait NukiWebAPI
      * @param string $SmartLockID
      * @param string $Parameter
      * @return string
+     * @throws Exception
      */
     public function GetSmartLockLog(string $SmartLockID, string $Parameter): string
     {
@@ -109,6 +115,7 @@ trait NukiWebAPI
     /**
      * Get all registered decentral webhooks from nuki web
      * @return string
+     * @throws Exception
      */
     public function GetDecentralWebHooks(): string
     {
@@ -123,6 +130,7 @@ trait NukiWebAPI
      * @param string $WebhookURL
      * @param string $WebhookFeatures (must be json_encoded)
      * @return string
+     * @throws Exception
      */
     public function CreateDecentralWebhook(string $WebhookURL, string $WebhookFeatures): string
     {
@@ -139,6 +147,7 @@ trait NukiWebAPI
      * Deletes a decentral webhook from nuki web
      * @param int $WebhookID
      * @return string
+     * @throws Exception
      */
     public function DeleteDecentralWebhook(int $WebhookID): string
     {
@@ -151,6 +160,9 @@ trait NukiWebAPI
 
     #################### Private
 
+    /**
+     * @throws Exception
+     */
     public function SendDataToNukiWeb(string $Endpoint, string $CustomRequest, string $Postfields): string
     {
         $this->SendDebug(__FUNCTION__, 'Endpoint: ' . $Endpoint, 0);
@@ -180,15 +192,13 @@ trait NukiWebAPI
         $httpCode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
         if (!curl_errno($ch)) {
             $this->SendDebug(__FUNCTION__, 'Response http code: ' . $httpCode, 0);
-            switch ($httpCode) {
-                case 200:  # OK
-                    $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-                    $header = substr($response, 0, $header_size);
-                    $body = substr($response, $header_size);
-                    $this->SendDebug(__FUNCTION__, 'Response header: ' . $header, 0);
-                    $this->SendDebug(__FUNCTION__, 'Response body: ' . $body, 0);
-                    break;
-
+            # OK
+            if ($httpCode == 200) {
+                $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+                $header = substr($response, 0, $header_size);
+                $body = substr($response, $header_size);
+                $this->SendDebug(__FUNCTION__, 'Response header: ' . $header, 0);
+                $this->SendDebug(__FUNCTION__, 'Response body: ' . $body, 0);
             }
         } else {
             $error_msg = curl_error($ch);

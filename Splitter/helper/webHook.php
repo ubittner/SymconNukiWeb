@@ -1,5 +1,6 @@
 <?php
 
+/** @noinspection PhpUndefinedFieldInspection */
 /** @noinspection PhpUndefinedFunctionInspection */
 /** @noinspection PhpUnused */
 
@@ -14,9 +15,9 @@ trait Helper_webHook
      *
      * @throws Exception
      */
-    protected function ProcessHookData()
+    protected function ProcessHookData(): void
     {
-        //Get incomming data from server
+        //Get incoming data from server
         $this->SendDebug(__FUNCTION__, 'Incoming data: ' . print_r($_SERVER, true), 0);
         //Get content
         $data = file_get_contents('php://input');

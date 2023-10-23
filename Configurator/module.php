@@ -1,34 +1,26 @@
 <?php
 
+/** @noinspection PhpUndefinedFieldInspection */
 /** @noinspection DuplicatedCode */
 /** @noinspection PhpUnused */
 
 declare(strict_types=1);
 
-class NukiConfiguratorWebAPI extends IPSModule
+class NukiConfiguratorWebAPI extends IPSModuleStrict
 {
     //Constants
     private const LIBRARY_GUID = '{8CDE2F20-ECBF-F12E-45AC-B8A7F36CBBFC}';
 
-    public function Create()
+    public function Create(): void
     {
         //Never delete this line!
         parent::Create();
-
-        //Properties
-        $this->RegisterPropertyInteger('CategoryID', 0);
 
         //Connect to parent (Nuki Web Splitter)
         $this->ConnectParent('{DA16C1AA-0AFE-65B6-1A0C-5761A08A0FF8}');
     }
 
-    public function Destroy()
-    {
-        //Never delete this line!
-        parent::Destroy();
-    }
-
-    public function ApplyChanges()
+    public function ApplyChanges(): void
     {
         //Wait until IP-Symcon is started
         $this->RegisterMessage(0, IPS_KERNELSTARTED);
@@ -37,7 +29,7 @@ class NukiConfiguratorWebAPI extends IPSModule
         parent::ApplyChanges();
     }
 
-    public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
+    public function MessageSink($TimeStamp, $SenderID, $Message, $Data): void
     {
         $this->SendDebug(__FUNCTION__, $TimeStamp . ', SenderID: ' . $SenderID . ', Message: ' . $Message . ', Data: ' . print_r($Data, true), 0);
         if (!empty($Data)) {
@@ -45,20 +37,19 @@ class NukiConfiguratorWebAPI extends IPSModule
                 $this->SendDebug(__FUNCTION__, 'Data[' . $key . '] = ' . json_encode($value), 0);
             }
         }
-        switch ($Message) {
-            case IPS_KERNELSTARTED:
-                $this->KernelReady();
-                break;
-
+        if ($Message == IPS_KERNELSTARTED) {
+            $this->KernelReady();
         }
     }
 
-    public function GetConfigurationForm()
+    /**
+     * @throws Exception
+     */
+    public function GetConfigurationForm(): string
     {
         $formData = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
         $library = IPS_GetLibrary(self::LIBRARY_GUID);
-        $version = 'Version: ' . $library['Version'] . '-' . $library['Build'] . ' vom ' . date('d.m.Y', $library['Date']);
-        $formData['elements'][2]['caption'] = $version;
+        $formData['elements'][2]['caption'] = 'ID: ' . $this->InstanceID . ', Version: ' . $library['Version'] . '-' . $library['Build'] . ', ' . date('d.m.Y', $library['Date']);
         $values = $this->GetDevices();
         $formData['actions'][0]['values'] = $values;
         return json_encode($formData);
@@ -66,32 +57,20 @@ class NukiConfiguratorWebAPI extends IPSModule
 
     #################### Private
 
-    private function KernelReady()
+    private function KernelReady(): void
     {
         $this->ApplyChanges();
     }
 
-    private function GetCategoryPath(int $CategoryID): array
-    {
-        if ($CategoryID === 0) {
-            return [];
-        }
-        $path[] = IPS_GetName($CategoryID);
-        $parentID = IPS_GetObject($CategoryID)['ParentID'];
-        while ($parentID > 0) {
-            $path[] = IPS_GetName($parentID);
-            $parentID = IPS_GetObject($parentID)['ParentID'];
-        }
-        return array_reverse($path);
-    }
-
+    /**
+     * @throws Exception
+     */
     private function GetDevices(): array
     {
         $values = [];
         if (!$this->HasActiveParent()) {
             return $values;
         }
-        $location = $this->GetCategoryPath($this->ReadPropertyInteger(('CategoryID')));
         $data = [];
         $buffer = [];
         $data['DataID'] = '{7F9C82E4-FF89-7856-2F13-E5A1992167D6}';
@@ -136,8 +115,7 @@ class NukiConfiguratorWebAPI extends IPSModule
                                         'AccountID'   => (string) $accountID,
                                         'AuthID'      => (string) $authID,
                                         'Name'        => (string) $name
-                                    ],
-                                    'location' => $location
+                                    ]
                                 ]
                             ];
                             break;
@@ -161,8 +139,7 @@ class NukiConfiguratorWebAPI extends IPSModule
                                         'AccountID' => (string) $accountID,
                                         'AuthID' => (string) $authID,
                                         'Name' => (string) $name
-                                    ],
-                                    'location' => $location
+                                    ]
                                 ]
                                  */
                             ];
@@ -186,8 +163,7 @@ class NukiConfiguratorWebAPI extends IPSModule
                                         'AccountID'   => (string) $accountID,
                                         'AuthID'      => (string) $authID,
                                         'Name'        => (string) $name
-                                    ],
-                                    'location' => $location
+                                    ]
                                 ]
                             ];
                             break;
@@ -211,13 +187,11 @@ class NukiConfiguratorWebAPI extends IPSModule
                                         'AccountID' => (string) $accountID,
                                         'AuthID' => (string) $authID,
                                         'Name' => (string) $name
-                                    ],
-                                    'location' => $location
+                                    ]
                                 ]
                                  */
                             ];
                             break;
-
                     }
                 }
             }
