@@ -1,18 +1,18 @@
 {
-  "id": "{DA16C1AA-0AFE-65B6-1A0C-5761A08A0FF8}",
-  "name": "Nuki Splitter Web API",
-  "type": 2,
-  "vendor": "NUKI",
-  "aliases": [
-    "Nuki Splitter Web API"
-  ],
-  "url": "https://github.com/ubittner/SymconNukiWeb",
-  "parentRequirements": [],
-  "childRequirements": [
-    "{6BD0D007-1A06-4F3F-1896-84E2BBFB4B09}"
-  ],
-  "implemented": [
-    "{7F9C82E4-FF89-7856-2F13-E5A1992167D6}"
-  ],
-  "prefix": "NUKISW"
+    "id": "{DA16C1AA-0AFE-65B6-1A0C-5761A08A0FF8}",
+    "name": "Nuki Splitter Web API",
+    "type": 2,
+    "vendor": "NUKI",
+    "aliases": [
+        "Nuki Splitter Web API"
+    ],
+    "url": "https://github.com/ubittner/SymconNukiWeb",
+    "parentRequirements": [],
+    "childRequirements": [
+        "{6BD0D007-1A06-4F3F-1896-84E2BBFB4B09}"
+    ],
+    "implemented": [
+        "{7F9C82E4-FF89-7856-2F13-E5A1992167D6}"
+    ],
+    "prefix": "NUKISW"
 }

@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 trait Helper_webOAuth
 {
-    private $oauthIdentifier = 'nuki_web';
-    private $oauthServer = 'oauth.ipmagic.de';
+    private string $oauthIdentifier = 'nuki_web';
+    private string $oauthServer = 'oauth.ipmagic.de';
 
     #################### Public
 
@@ -20,12 +20,15 @@ trait Helper_webOAuth
     public function Register(): string
     {
         //Return everything which will open the browser
-        return 'https://' . $this->oauthServer . '/authorize/' . $this->oauthIdentifier . '?username=' . urlencode(IPS_GetLicensee());
+        return 'https://oauth.ipmagic.de/authorize/nuki_web?username=' . urlencode(IPS_GetLicensee());
     }
 
-    public function RequestStatus()
+    /**
+     * @throws Exception
+     */
+    public function RequestStatus(): void
     {
-        echo $this->FetchData('https://' . $this->oauthServer . '/forward');
+        echo $this->FetchData('https://oauth.ipmagic.de/forward');
     }
 
     #################### Protected
@@ -35,7 +38,7 @@ trait Helper_webOAuth
      *
      * @throws Exception
      */
-    protected function ProcessOAuthData()
+    protected function ProcessOAuthData(): mixed
     {
         //Let's assume requests via GET are for code exchange.
         if ($_SERVER['REQUEST_METHOD'] == 'GET') {
@@ -51,10 +54,14 @@ trait Helper_webOAuth
             //Just print raw post data!
             echo file_get_contents('php://input');
         }
+        return;
     }
 
     #################### Private
 
+    /**
+     * @throws Exception
+     */
     private function FetchRefreshToken($code): string
     {
         $this->SendDebug('FetchRefreshToken', 'Use Authentication Code to get our precious Refresh Token!', 0);
@@ -68,7 +75,7 @@ trait Helper_webOAuth
             ]
         ];
         $context = stream_context_create($options);
-        $result = file_get_contents('https://' . $this->oauthServer . '/access_token/' . $this->oauthIdentifier, false, $context);
+        $result = file_get_contents('https://oauth.ipmagic.de/access_token/nuki_web', false, $context);
         $this->SendDebug(__FUNCTION__, $result, 0);
         $data = json_decode($result);
         if (!isset($data->token_type) || $data->token_type != 'bearer') {
@@ -80,6 +87,9 @@ trait Helper_webOAuth
         return $data->refresh_token;
     }
 
+    /**
+     * @throws Exception
+     */
     private function FetchAccessToken($Token = '', $Expires = 0)
     {
         //Exchange our Refresh Token for temporary Access Token
@@ -107,7 +117,7 @@ trait Helper_webOAuth
                 ]
             ];
             $context = stream_context_create($options);
-            $result = file_get_contents('https://' . $this->oauthServer . '/access_token/' . $this->oauthIdentifier, false, $context);
+            $result = file_get_contents('https://oauth.ipmagic.de/access_token/nuki_web', false, $context);
             $this->SendDebug(__FUNCTION__, $result, 0);
             $data = json_decode($result);
             if (!isset($data->token_type) || $data->token_type != 'bearer') {
@@ -131,7 +141,10 @@ trait Helper_webOAuth
         return $Token;
     }
 
-    private function FetchData($url)
+    /**
+     * @throws Exception
+     */
+    private function FetchData($url): false|string
     {
         $opts = [
             'http'=> [
@@ -144,14 +157,14 @@ trait Helper_webOAuth
         $context = stream_context_create($opts);
         $this->SendDebug(__FUNCTION__, 'Context: ' . $context, 0);
         $result = file_get_contents($url, false, $context);
-        if ((strpos($http_response_header[0], '200') === false)) {
+        if ((!str_contains($http_response_header[0], '200'))) {
             echo $http_response_header[0] . PHP_EOL . $result;
             return false;
         }
         return $result;
     }
 
-    private function RegisterWebOAuth($WebOAuth)
+    private function RegisterWebOAuth($WebOAuth): void
     {
         $this->SendDebug(__FUNCTION__, 'Method was executed.', 0);
         $ids = IPS_GetInstanceListByModuleID(self::CORE_WEBOAUTH_GUID);
@@ -176,7 +189,7 @@ trait Helper_webOAuth
         }
     }
 
-    private function UnregisterWebOAuth($WebOAuth)
+    private function UnregisterWebOAuth($WebOAuth): void
     {
         $this->SendDebug(__FUNCTION__, 'Method was executed.', 0);
         $ids = IPS_GetInstanceListByModuleID(self::CORE_WEBOAUTH_GUID);

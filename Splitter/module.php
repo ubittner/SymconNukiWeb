@@ -22,7 +22,7 @@ class NukiSplitterWebAPI extends IPSModule
     private const CORE_WEBOAUTH_GUID = '{F99BF07D-CECA-438B-A497-E4B55F139D37}';
     private const NUKI_DEVICE_DATA_GUID = '{6BD0D007-1A06-4F3F-1896-84E2BBFB4B09}';
 
-    public function Create()
+    public function Create(): void
     {
         //Never delete this line!
         parent::Create();
@@ -38,7 +38,7 @@ class NukiSplitterWebAPI extends IPSModule
         $this->RegisterAttributeString('WebhookSecret', '');
     }
 
-    public function Destroy()
+    public function Destroy(): void
     {
         //Unregister WebHook
         if (!IPS_InstanceExists($this->InstanceID)) {
@@ -54,7 +54,10 @@ class NukiSplitterWebAPI extends IPSModule
         parent::Destroy();
     }
 
-    public function ApplyChanges()
+    /**
+     * @throws Exception
+     */
+    public function ApplyChanges(): void
     {
         //Wait until IP-Symcon is started
         $this->RegisterMessage(0, IPS_KERNELSTARTED);
@@ -82,7 +85,10 @@ class NukiSplitterWebAPI extends IPSModule
         $this->ManageWebhook();
     }
 
-    public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
+    /**
+     * @throws Exception
+     */
+    public function MessageSink($TimeStamp, $SenderID, $Message, $Data): void
     {
         $this->SendDebug('MessageSink', 'SenderID: ' . $SenderID . ', Message: ' . $Message, 0);
         if (!empty($Data)) {
@@ -90,26 +96,28 @@ class NukiSplitterWebAPI extends IPSModule
                 $this->SendDebug(__FUNCTION__, 'Data[' . $key . '] = ' . json_encode($value), 0);
             }
         }
-        switch ($Message) {
-            case IPS_KERNELSTARTED:
-                $this->KernelReady();
-                break;
-
+        if ($Message == IPS_KERNELSTARTED) {
+            $this->KernelReady();
         }
     }
 
-    public function GetConfigurationForm()
+    /**
+     * @throws Exception
+     */
+    public function GetConfigurationForm(): false|string
     {
         $data = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
         $library = IPS_GetLibrary(self::LIBRARY_GUID);
-        $version = 'Version: ' . $library['Version'] . '-' . $library['Build'] . ' vom ' . date('d.m.Y', $library['Date']);
-        $data['elements'][2]['caption'] = $version;
+        $formData['elements'][2]['caption'] = 'ID: ' . $this->InstanceID . ', Version: ' . $library['Version'] . '-' . $library['Build'] . ', ' . date('d.m.Y', $library['Date']);
         $data['actions'][0]['caption'] = $this->ReadAttributeString('Token') ? 'Token: ' . substr($this->ReadAttributeString('Token'), 0, 16) . ' ...' : 'Token: Not registered yet!';
         $data['actions'][3]['items'][2]['caption'] = 'Webhook URL: ' . $this->ReadAttributeString('WebhookURL');
         $data['actions'][3]['items'][3]['caption'] = 'Webhook Secret: ' . $this->ReadAttributeString('WebhookSecret');
         return json_encode($data);
     }
 
+    /**
+     * @throws Exception
+     */
     public function ForwardData($JSONString): string
     {
         $this->SendDebug(__FUNCTION__, $JSONString, 0);
@@ -158,11 +166,17 @@ class NukiSplitterWebAPI extends IPSModule
 
     #################### Private
 
+    /**
+     * @throws Exception
+     */
     private function KernelReady(): void
     {
         $this->ApplyChanges();
     }
 
+    /**
+     * @throws Exception
+     */
     private function ValidateConfiguration(): bool
     {
         $result = true;

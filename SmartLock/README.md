@@ -52,19 +52,19 @@ Der Nutzer stimmt den o.a. Bedingungen, sowie den Lizenzbedingungen ausdrücklic
 
 __Konfigurationsseite__:
 
-Name                                    | Beschreibung
---------------------------------------- | ------------------
-Smart Lock ID                           | ID des Smart Locks
-Account ID                              | ID des Benutzerkontos
-Auth ID                                 | Authorisierungs ID
-Name                                    | Name des Gerätes
-Status automatisch aktualisieren        | Status automatisch aktualisieren
-Alternativer Aktualisierungsintervall   | Intervall zur alternativen Aktualisierung
-Türsensor                               | Türsensor Informationen anzeigen
-Keypad                                  | Keypad Informationen anzeigen
-Protokoll                               | Protokoll anzeigen
-Protokollzeitraum (letzte Tage)         | Protokollzeitraum in Tagen
-Anzahl der maximalen Protokolleinträge  | Anzahl der maximalen Protokolleinträge
+| Name                                   | Beschreibung                              |
+|----------------------------------------|-------------------------------------------|
+| Smart Lock ID                          | ID des Smart Locks                        |
+| Account ID                             | ID des Benutzerkontos                     |
+| Auth ID                                | Authorisierungs ID                        |
+| Name                                   | Name des Gerätes                          |
+| Status automatisch aktualisieren       | Status automatisch aktualisieren          |
+| Alternativer Aktualisierungsintervall  | Intervall zur alternativen Aktualisierung |
+| Türsensor                              | Türsensor Informationen anzeigen          |
+| Keypad                                 | Keypad Informationen anzeigen             |
+| Protokoll                              | Protokoll anzeigen                        |
+| Protokollzeitraum (letzte Tage)        | Protokollzeitraum in Tagen                |
+| Anzahl der maximalen Protokolleinträge | Anzahl der maximalen Protokolleinträge    |
 
 ### 5. Statusvariablen und Profile
 
@@ -73,35 +73,35 @@ Das Löschen einzelner kann zu Fehlfunktionen führen.
 
 #### Statusvariablen
 
-Name                            | Typ     | Beschreibung
-------------------------------- | ------- | -------------------------------------------------------------
-SmartLock                       | integer | Smart Lock Aktionen (auf- und zusperren + weitere Funktionen)
-DeviceState                     | integer | Gerätestatus (diverse)
-BatteryState                    | boolean | Batteriestatus (OK, Batterie schwach)
-BatteryCharge                   | integer | Batterieladung (in %)
-BatteryCharging                 | boolean | Batterieaufladung (in- / aktiv)
-SmartLockLED                    | boolean | Led-Signal am Smart Lock (Aus / An)
-Brightness                      | integer | LED Helligkeit (0 - 5) 
-DoorState                       | integer | Türstatus (diverse)
-DoorSensorBatteryState          | boolean | Türsensor Batteriestatus (OK, Batterie schwach)
-KeypadBatteryState              | boolean | Keypad Batteriestatus (OK, Batterie schwach)
-ActivityLog                     | string  | Protokoll
+| Name                   | Typ     | Beschreibung                                                  |
+|------------------------|---------|---------------------------------------------------------------|
+| SmartLock              | integer | Smart Lock Aktionen (auf- und zusperren + weitere Funktionen) |
+| DeviceState            | integer | Gerätestatus (diverse)                                        |
+| BatteryState           | boolean | Batteriestatus (OK, Batterie schwach)                         |
+| BatteryCharge          | integer | Batterieladung (in %)                                         |
+| BatteryCharging        | boolean | Batterieaufladung (in- / aktiv)                               |
+| SmartLockLED           | boolean | Led-Signal am Smart Lock (Aus / An)                           |
+| Brightness             | integer | LED Helligkeit (0 - 5)                                        |
+| DoorState              | integer | Türstatus (diverse)                                           |
+| DoorSensorBatteryState | boolean | Türsensor Batteriestatus (OK, Batterie schwach)               |
+| KeypadBatteryState     | boolean | Keypad Batteriestatus (OK, Batterie schwach)                  |
+| ActivityLog            | string  | Protokoll                                                     |
 
 #### Profile
 
 NUKISLW.InstanzID.Name
 
-Name                    | Typ
------------------------ | -------
-SmartLock               | integer
-DeviceState             | integer
-BatteryState            | boolean
-BatteryCharge           | integer
-BatteryCharging         | boolean
-Brightness              | integer
-DoorState               | integer
-DoorSensorBatteryState  | boolean
-KeypadBatteryState      | boolean
+| Name                   | Typ     |
+|------------------------|---------|
+| SmartLock              | integer |
+| DeviceState            | integer |
+| BatteryState           | boolean |
+| BatteryCharge          | integer |
+| BatteryCharging        | boolean |
+| Brightness             | integer |
+| DoorState              | integer |
+| DoorSensorBatteryState | boolean |
+| KeypadBatteryState     | boolean |
 
 Wird die NUKI Smart Lock Instanz gelöscht, so werden automatisch die oben aufgeführten Profile gelöscht.
 

@@ -52,17 +52,17 @@ Der Nutzer stimmt den o.a. Bedingungen, sowie den Lizenzbedingungen ausdrücklic
 
 __Konfigurationsseite__:
 
-Name                                    | Beschreibung
---------------------------------------- | ------------------
-Smart Lock ID                           | ID des Openers
-Account ID                              | ID des Benutzerkontos
-Auth ID                                 | Authorisierungs ID
-Name                                    | Name des Gerätes
-Status automatisch aktualisieren        | Status automatisch aktualisieren
-Alternativer Aktualisierungsintervall   | Intervall zur alternativen Aktualisierung
-Protokoll verwenden                     | Protokoll verwenden
-Zeitraum (letzte Tage)                  | Zeitraum
-Anzahl der maximalen Einträge           | Anzahl der maximalen Einträge   
+| Name                                  | Beschreibung                              |
+|---------------------------------------|-------------------------------------------|
+| Smart Lock ID                         | ID des Openers                            |
+| Account ID                            | ID des Benutzerkontos                     |
+| Auth ID                               | Authorisierungs ID                        |
+| Name                                  | Name des Gerätes                          |
+| Status automatisch aktualisieren      | Status automatisch aktualisieren          |
+| Alternativer Aktualisierungsintervall | Intervall zur alternativen Aktualisierung |
+| Protokoll verwenden                   | Protokoll verwenden                       |
+| Zeitraum (letzte Tage)                | Zeitraum                                  |
+| Anzahl der maximalen Einträge         | Anzahl der maximalen Einträge             |
 
 ### 5. Statusvariablen und Profile
 
@@ -71,41 +71,41 @@ Das Löschen einzelner kann zu Fehlfunktionen führen.
 
 #### Statusvariablen
 
-Name                            | Typ     | Beschreibung
-------------------------------- | ------- | ----------------------------------------------------
-Door                            | integer | Öffnet die Tür
-DeviceState                     | integer | Status des Openers
-BatteryState                    | boolean | Batteriestatus
-RingToOpen                      | boolean | Ring To Open ein- / ausschalten
-RingToOpenTimeout               | integer | Dauer Ring To Open
-OneTimeAccess                   | boolean | Einmal-Zutritt
-ContinuousMode                  | boolean | Dauermodus  ein- / ausschalten
-RingSuppressionRing             | boolean | Klingelunterdrückung Klingeln ein- / ausschalten
-RingSuppressionRingToOpen       | boolean | Klingelunterdrückung Ring To Open ein- / ausschalten
-RingSuppressionContinuousMode   | boolean | Klingelunterdrückung Dauermodus ein- / ausschalten
-SoundDoorbellRings              | integer | Sound Klingeln
-SoundOpenViaApp                 | integer | Sound Öffnen via App
-SoundRingToOpen                 | integer | Sound Ring To Open
-SoundContinuousMode             | integer | Sound Dauermodus
-Volume                          | integer | Lautstärke
-OpenerLED                       | boolean | LED-Signal am Opener ein- / ausschalten
-ActivityLog                     | string  | Protokoll
+| Name                          | Typ     | Beschreibung                                         |
+|-------------------------------|---------|------------------------------------------------------|
+| Door                          | integer | Öffnet die Tür                                       |
+| DeviceState                   | integer | Status des Openers                                   |
+| BatteryState                  | boolean | Batteriestatus                                       |
+| RingToOpen                    | boolean | Ring To Open ein- / ausschalten                      |
+| RingToOpenTimeout             | integer | Dauer Ring To Open                                   |
+| OneTimeAccess                 | boolean | Einmal-Zutritt                                       |
+| ContinuousMode                | boolean | Dauermodus  ein- / ausschalten                       |
+| RingSuppressionRing           | boolean | Klingelunterdrückung Klingeln ein- / ausschalten     |
+| RingSuppressionRingToOpen     | boolean | Klingelunterdrückung Ring To Open ein- / ausschalten |
+| RingSuppressionContinuousMode | boolean | Klingelunterdrückung Dauermodus ein- / ausschalten   |
+| SoundDoorbellRings            | integer | Sound Klingeln                                       |
+| SoundOpenViaApp               | integer | Sound Öffnen via App                                 |
+| SoundRingToOpen               | integer | Sound Ring To Open                                   |
+| SoundContinuousMode           | integer | Sound Dauermodus                                     |
+| Volume                        | integer | Lautstärke                                           |
+| OpenerLED                     | boolean | LED-Signal am Opener ein- / ausschalten              |
+| ActivityLog                   | string  | Protokoll                                            |
 
 #### Profile
 
 NUKIOW.InstanzID.Name
 
-Name                | Typ
-------------------- | -------
-Door                | integer
-DeviceState         | integer  
-BatteryState        | boolean
-RingToOpenTimeout   | integer
-SoundDoorbellRings  | integer
-SoundOpenViaApp     | integer
-SoundRingToOpen     | integer
-SoundContinuousMode | integer
-Volume              | integer
+| Name                | Typ     |
+|---------------------|---------|
+| Door                | integer |
+| DeviceState         | integer |
+| BatteryState        | boolean |
+| RingToOpenTimeout   | integer |
+| SoundDoorbellRings  | integer |
+| SoundOpenViaApp     | integer |
+| SoundRingToOpen     | integer |
+| SoundContinuousMode | integer |
+| Volume              | integer |
 
 Wird die NUKI Smart Lock Instanz gelöscht, so werden automatisch die oben aufgeführten Profile gelöscht.
 
