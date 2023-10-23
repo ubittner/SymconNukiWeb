@@ -1,11 +1,12 @@
 <?php
 
+/** @noinspection PhpUndefinedFieldInspection */
 /** @noinspection DuplicatedCode */
 /** @noinspection PhpUnused */
 
 declare(strict_types=1);
 
-class NukiOpenerWebAPI extends IPSModule
+class NukiOpenerWebAPI extends IPSModuleStrict
 {
     //Constants
     private const LIBRARY_GUID = '{8CDE2F20-ECBF-F12E-45AC-B8A7F36CBBFC}';
@@ -304,13 +305,13 @@ class NukiOpenerWebAPI extends IPSModule
     /**
      * @throws Exception
      */
-    public function ReceiveData($JSONString): void
+    public function ReceiveData($JSONString): string
     {
         //Received data from splitter
         $this->SendDebug(__FUNCTION__, 'Incoming data: ' . $JSONString, 0);
         if (!$this->ReadPropertyBoolean('UseAutomaticUpdate')) {
             $this->SendDebug(__FUNCTION__, 'Abort, automatic update is disabled!', 0);
-            return;
+            return '';
         }
         $data = json_decode($JSONString);
         $this->SendDebug(__FUNCTION__, 'Buffer data:  ' . json_encode($data->Buffer), 0);
@@ -347,6 +348,7 @@ class NukiOpenerWebAPI extends IPSModule
                     $this->SendDebug(__FUNCTION__, 'Abort, unknown Parameter!', 0);
             }
         }
+        return '';
     }
 
     #################### Request Action

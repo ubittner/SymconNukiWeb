@@ -1,5 +1,6 @@
 <?php
 
+/** @noinspection PhpUndefinedFieldInspection */
 /** @noinspection DuplicatedCode */
 /** @noinspection PhpUnused */
 
@@ -7,7 +8,7 @@ declare(strict_types=1);
 
 include_once __DIR__ . '/helper/autoload.php';
 
-class NukiSplitterWebAPI extends IPSModule
+class NukiSplitterWebAPI extends IPSModuleStrict
 {
     //Helper
     use NukiWebAPI;
@@ -104,11 +105,11 @@ class NukiSplitterWebAPI extends IPSModule
     /**
      * @throws Exception
      */
-    public function GetConfigurationForm(): false|string
+    public function GetConfigurationForm(): string
     {
         $data = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
         $library = IPS_GetLibrary(self::LIBRARY_GUID);
-        $formData['elements'][2]['caption'] = 'ID: ' . $this->InstanceID . ', Version: ' . $library['Version'] . '-' . $library['Build'] . ', ' . date('d.m.Y', $library['Date']);
+        $data['elements'][2]['caption'] = 'ID: ' . $this->InstanceID . ', Version: ' . $library['Version'] . '-' . $library['Build'] . ', ' . date('d.m.Y', $library['Date']);
         $data['actions'][0]['caption'] = $this->ReadAttributeString('Token') ? 'Token: ' . substr($this->ReadAttributeString('Token'), 0, 16) . ' ...' : 'Token: Not registered yet!';
         $data['actions'][3]['items'][2]['caption'] = 'Webhook URL: ' . $this->ReadAttributeString('WebhookURL');
         $data['actions'][3]['items'][3]['caption'] = 'Webhook Secret: ' . $this->ReadAttributeString('WebhookSecret');
