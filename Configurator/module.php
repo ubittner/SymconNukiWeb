@@ -96,8 +96,9 @@ class NukiConfiguratorWebAPI extends IPSModuleStrict
                     $deviceType = $device['type'];
                     $name = $device['name'];
                     switch ($deviceType) {
-                        case 0: # Smart Lock
-                        case 4: # Smart Lock 3.0 Pro
+                        case 0: # Smart Lock 1,2 (1. and 2. Generation)
+                        case 4: # Smart Lock 3/4 (3. und 4. Generation)
+                        case 5: # Smart Lock 5   (5. Genration: Smart Lock Ultra)
                             $instanceID = $this->GetDeviceInstances($smartLockID, 0);
                             $values[] = [
                                 'SmartLockID'        => $smartLockID,

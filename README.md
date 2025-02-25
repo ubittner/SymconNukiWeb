@@ -5,9 +5,9 @@
 [![Check Style](https://github.com/ubittner/SymconNukiWeb/workflows/Check%20Style/badge.svg)](https://github.com/ubittner/SymconNukiWeb/actions)
 [![Run Tests](https://github.com/ubittner/SymconNukiWeb/workflows/Run%20Tests/badge.svg)](https://github.com/ubittner/SymconNukiWeb/actions)  
 [![Module Version](https://img.shields.io/badge/Module_Version-2.0-blue.svg)]()
-[![Module Build](https://img.shields.io/badge/Module_Build-4-blue.svg)]()
-[![Module Date](https://img.shields.io/badge/Module_Date-20231023_(23.10.2023)-blue.svg)]()  
-[![Version](https://img.shields.io/badge/Nuki_Web_API_Version-1.4.0-yellow.svg)]()  
+[![Module Build](https://img.shields.io/badge/Module_Build-5-blue.svg)]()
+[![Module Date](https://img.shields.io/badge/Module_Date-20250224_(24.02.2025)-blue.svg)]()  
+[![Version](https://img.shields.io/badge/Nuki_Web_API_Version-1.5.3-yellow.svg)]()  
 [![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
 Dieses Repository integriert Nuki Geräte in [IP-Symcon](https://www.symcon.de) mittels der [Nuki Web API](https://developer.nuki.io/page/nuki-web-api-1-4/3).  
@@ -21,7 +21,7 @@ Folgende Module beinhaltet dieses Repository (in alphabetischer Reihenfolge):
   Dieses Modul integriert den [NUKI Opener](https://nuki.io/de/opener).  
 
 - __SmartLock__ ([Dokumentation](SmartLock))  
-  Dieses Modul integriert das [NUKI Smart Lock](https://nuki.io/de/smart-lock/) 1.0, 2.0, 3.0 (Pro).
+  Dieses Modul integriert das [NUKI Smart Lock](https://nuki.io/de/smart-lock/) Generation 1, 2, 3, 4 und 5.
 
 - __Splitter__ ([Dokumentation](Splitter))  
   Dieses Modul stellt die Kommunikation mit der Nuki Web API her.

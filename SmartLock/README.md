@@ -4,7 +4,7 @@
 
 [![Image](../imgs/NUKI_SmartLock.png)]()  
 
-Dieses Modul integriert das [NUKI Smart Lock](https://nuki.io/de/smart-lock/) Version 1.0, 2.0, 3.0 (Pro) in [IP-Symcon](https://www.symcon.de) mittels der [Nuki Web API](https://developer.nuki.io/t/nuki-web-api/25).  
+Dieses Modul integriert das [NUKI Smart Lock](https://nuki.io/de/smart-lock/) Generation 1, 2, 3, 4 und 5 in [IP-Symcon](https://www.symcon.de) mittels der [Nuki Web API](https://developer.nuki.io/t/nuki-web-api/25).  
 In Verbindung mit einer NUKI Bridge macht das Nuki Smart Lock aus deinem Türschloss einen smarten Türöffner.
 
 Für dieses Modul besteht kein Anspruch auf Fehlerfreiheit, Weiterentwicklung, sonstige Unterstützung oder Support.  
@@ -34,8 +34,8 @@ Der Nutzer stimmt den o.a. Bedingungen, sowie den Lizenzbedingungen ausdrücklic
 
 ### 2. Voraussetzungen
 
-- IP-Symcon ab Version 6.0
-- Nuki Smart Lock 1.0, 2.0, 3.0 (Pro)
+- IP-Symcon ab Version 7.0
+- Nuki Smart Lock Generation 1, 2, 3, 4 und 5
 - Nuki Bridge
 - [Nuki Web Zugang](https://web.nuki.io/#/login)
 - [Nuki Splitter Web API](../Splitter)  
