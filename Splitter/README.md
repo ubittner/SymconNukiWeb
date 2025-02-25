@@ -25,8 +25,8 @@ Der Nutzer stimmt den o.a. Bedingungen, sowie den Lizenzbedingungen ausdrücklic
 
 ### 2. Voraussetzungen
 
-- IP-Symcon ab Version 6.0
-- Nuki Smartlock 1.0, 2.0, 3.0 (Pro)
+- IP-Symcon ab Version 7.0
+- Nuki Smartlock Generation 1, 2, 3, 4 und 5
 - Nuki Opener
 - [Nuki Web Aktivierung](https://web.nuki.io/#/login)
 

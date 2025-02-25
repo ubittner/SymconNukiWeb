@@ -34,7 +34,7 @@ Der Nutzer stimmt den o.a. Bedingungen, sowie den Lizenzbedingungen ausdrücklic
 
 ### 2. Voraussetzungen
 
-- IP-Symcon ab Version 6.0
+- IP-Symcon ab Version 7.0
 - Nuki Opener
 - Nuki Bridge
 - [Nuki Web Zugang](https://web.nuki.io/#/login)
