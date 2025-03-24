@@ -1,8 +1,6 @@
 <?php
 
 /** @noinspection PhpUndefinedFieldInspection */
-/** @noinspection DuplicatedCode */
-/** @noinspection PhpUnused */
 
 declare(strict_types=1);
 
@@ -11,7 +9,7 @@ trait Helper_webOAuth
     private string $oauthIdentifier = 'nuki_web';
     private string $oauthServer = 'oauth.ipmagic.de';
 
-    #################### Public
+    ########## Public
 
     /**
      * This function will be called by the register button on the property page!
@@ -21,18 +19,15 @@ trait Helper_webOAuth
     public function Register(): string
     {
         //Return everything which will open the browser
-        return 'https://oauth.ipmagic.de/authorize/nuki_web?username=' . urlencode(IPS_GetLicensee());
+        return 'https://' . $this->oauthServer . '/authorize/' . $this->oauthIdentifier . '?username=' . urlencode(IPS_GetLicensee());
     }
 
-    /**
-     * @throws Exception
-     */
     public function RequestStatus(): void
     {
-        echo $this->FetchData('https://oauth.ipmagic.de/forward');
+        echo $this->FetchData('https://' . $this->oauthServer . '/forward');
     }
 
-    #################### Protected
+    ########## Protected
 
     /**
      * This function will be called by the OAuth control.
@@ -57,14 +52,19 @@ trait Helper_webOAuth
         }
     }
 
-    #################### Private
+    ########## Private
 
     /**
+     * Fetches the Refresh Token.
+     *
+     * @param $code
+     * @return string
      * @throws Exception
      */
     private function FetchRefreshToken($code): string
     {
-        $this->SendDebug('FetchRefreshToken', 'Use Authentication Code to get our precious Refresh Token!', 0);
+        $refreshToken = '';
+        $this->SendDebug(__FUNCTION__, 'Use Authentication Code to get our precious Refresh Token!', 0);
         $this->SendDebug(__FUNCTION__, json_encode($code), 0);
         //Exchange our Authentication Code for a permanent Refresh Token and temporary Access Token
         $options = [
@@ -75,40 +75,64 @@ trait Helper_webOAuth
             ]
         ];
         $context = stream_context_create($options);
-        $result = file_get_contents('https://oauth.ipmagic.de/access_token/nuki_web', false, $context);
-        $this->SendDebug(__FUNCTION__, $result, 0);
-        $data = json_decode($result);
-        if (!isset($data->token_type) || $data->token_type != 'bearer') {
-            die('Bearer Token expected');
+        $result = @file_get_contents('https://' . $this->oauthServer . '/access_token/' . $this->oauthIdentifier, false, $context);
+        //Check result, must be a json encoded string
+        if ($result === false) {
+            $error = error_get_last();
+            $this->SendDebug(__FUNCTION__, 'HTTP request failed. Error: ' . $error['message'], 0);
+            $this->LogMessage('ID: ' . $this->InstanceID . ', Fetch refresh token, HTTP request failed. Error: ' . $error['message'], KL_ERROR);
+            die();
         }
-        //Save temporary access token
-        $this->FetchAccessToken($data->access_token, time() + $data->expires_in);
-        //Return RefreshToken
-        return $data->refresh_token;
+        if (is_string($result)) {
+            if ($this->CheckJson($result)) {
+                //We got a json string, so lets decode it
+                $this->SendDebug(__FUNCTION__, $result, 0);
+                $data = json_decode($result);
+                if (!isset($data->token_type) || $data->token_type != 'bearer') {
+                    $this->SendDebug(__FUNCTION__, 'Abort, Bearer Token expected!', 0);
+                    $this->LogMessage('ID: ' . $this->InstanceID . ', Fetch refresh token. Abort, Bearer Token expected!', KL_WARNING);
+                    die();
+                }
+                //Save temporary access token
+                if (property_exists($data, 'access_token')) {
+                    $this->FetchAccessToken($data->access_token, time() + $data->expires_in);
+                }
+                if (property_exists($data, 'refresh_token')) {
+                    $refreshToken = $data->refresh_token;
+                }
+            }
+        }
+        return $refreshToken;
     }
 
     /**
-     * @throws Exception
+     * Fetches the Access Token.
+     *
+     * @param string $Token
+     * @param int $Expires
+     * @return mixed
      */
-    private function FetchAccessToken($Token = '', $Expires = 0)
+    private function FetchAccessToken(string $Token = '', int $Expires = 0): mixed
     {
         //Exchange our Refresh Token for temporary Access Token
         if ($Token == '' && $Expires == 0) {
-            //Check if we already have a valid Token in cache
+            //Check if we already have a valid Access Token in cache
             $data = $this->GetBuffer('AccessToken');
             if ($data != '') {
                 $data = json_decode($data);
                 if (time() < $data->Expires) {
-                    $this->SendDebug('FetchAccessToken', 'OK! Access Token is valid until ' . date('d.m.y H:i:s', $data->Expires), 0);
+                    $this->SendDebug(__FUNCTION__, 'OK! Access Token is valid until: ' . date('d.m.y H:i:s', $data->Expires), 0);
                     return $data->Token;
                 }
             }
-            $this->SendDebug('FetchAccessToken', 'Use Refresh Token to get new Access Token!', 0);
-            //If we slipped here we need to fetch the access token
+            //If we slipped here we need to fetch the new Access Token via the Refresh Token
+            $this->SendDebug(__FUNCTION__, 'Use Refresh Token to get a new Access Token!', 0);
+            //Check for an existing Refresh Token
             if (empty($this->ReadAttributeString('Token'))) {
-                //Abort, we have no refresh token
-                return '';
+                //Abort, we have no Refresh Token yet, please register first
+                die();
             }
+            //Get new tokens
             $options = [
                 'http' => [
                     'header'  => "Content-Type: application/x-www-form-urlencoded\r\n",
@@ -117,33 +141,46 @@ trait Helper_webOAuth
                 ]
             ];
             $context = stream_context_create($options);
-            $result = file_get_contents('https://oauth.ipmagic.de/access_token/nuki_web', false, $context);
-            $this->SendDebug(__FUNCTION__, $result, 0);
-            $data = json_decode($result);
-            if (!isset($data->token_type) || $data->token_type != 'bearer') {
-                die('Bearer Token expected');
+            $result = @file_get_contents('https://' . $this->oauthServer . '/access_token/' . $this->oauthIdentifier, false, $context);
+            //Check result, must be a json encoded string
+            if ($result === false) {
+                $error = error_get_last();
+                $this->SendDebug(__FUNCTION__, 'HTTP request failed. Error: ' . $error['message'], 0);
+                $this->LogMessage('ID: ' . $this->InstanceID . ', Fetch access token, HTTP request failed. Error: ' . $error['message'], KL_ERROR);
+                die();
             }
-            //Update parameters to properly cache it in the next step
-            $Token = $data->access_token;
-            $Expires = time() + $data->expires_in;
-            //Update Refresh Token
-            if (isset($data->refresh_token)) {
-                $this->SendDebug('FetchAccessToken', "NEW! Let's save the updated Refresh Token permanently", 0);
-                $this->WriteAttributeString('Token', $data->refresh_token);
-                $this->UpdateFormField('Token', 'caption', 'Token: ' . substr($data->refresh_token, 0, 16) . '...');
-                $this->ValidateConfiguration();
+            if (is_string($result)) {
+                if ($this->CheckJson($result)) {
+                    //We got a json string, so lets decode it
+                    $this->SendDebug(__FUNCTION__, $result, 0);
+                    $data = json_decode($result);
+                    if (!isset($data->token_type) || $data->token_type != 'bearer') {
+                        $this->SendDebug(__FUNCTION__, 'Abort, Bearer Token expected!', 0);
+                        $this->LogMessage('ID: ' . $this->InstanceID . ', Fetch access token. Abort, Bearer Token expected!', KL_WARNING);
+                        die();
+                    }
+                    //Update parameters to properly cache it in the next step
+                    //Update Access Token
+                    if (isset($data->access_token) && isset($data->expires_in)) {
+                        $Token = $data->access_token;
+                        $Expires = time() + $data->expires_in;
+                        $this->SetBuffer('AccessToken', json_encode(['Token' => $Token, 'Expires' => $Expires]));
+                        $this->SendDebug(__FUNCTION__, 'CACHE! New Access Token is valid until: ' . date('d.m.y H:i:s', $Expires), 0);
+                    }
+                    //Update Refresh Token
+                    if (isset($data->refresh_token)) {
+                        $this->SendDebug(__FUNCTION__, "NEW! Let's save the updated Refresh Token permanently", 0);
+                        $this->WriteAttributeString('Token', $data->refresh_token);
+                        $this->UpdateFormField('Token', 'caption', 'Token: ' . substr($data->refresh_token, 0, 16) . '...');
+                    }
+                }
             }
+            $this->ValidateConfiguration();
         }
-        $this->SendDebug('FetchAccessToken', 'CACHE! New Access Token is valid until ' . date('d.m.y H:i:s', $Expires), 0);
-        //Save current Token
-        $this->SetBuffer('AccessToken', json_encode(['Token' => $Token, 'Expires' => $Expires]));
-        //Return current Token
+        //Return current Access Token
         return $Token;
     }
 
-    /**
-     * @throws Exception
-     */
     private function FetchData($url): false|string
     {
         $opts = [
@@ -166,7 +203,6 @@ trait Helper_webOAuth
 
     private function RegisterWebOAuth($WebOAuth): void
     {
-        $this->SendDebug(__FUNCTION__, 'Method was executed.', 0);
         $ids = IPS_GetInstanceListByModuleID(self::CORE_WEBOAUTH_GUID);
         if (count($ids) > 0) {
             $clientIDs = json_decode(IPS_GetProperty($ids[0], 'ClientIDs'), true);
@@ -191,7 +227,6 @@ trait Helper_webOAuth
 
     private function UnregisterWebOAuth($WebOAuth): void
     {
-        $this->SendDebug(__FUNCTION__, 'Method was executed.', 0);
         $ids = IPS_GetInstanceListByModuleID(self::CORE_WEBOAUTH_GUID);
         if (count($ids) > 0) {
             $clientIDs = json_decode(IPS_GetProperty($ids[0], 'ClientIDs'), true);
@@ -210,7 +245,7 @@ trait Helper_webOAuth
                 array_splice($clientIDs, $index, 1);
                 IPS_SetProperty($ids[0], 'ClientIDs', json_encode($clientIDs));
                 IPS_ApplyChanges($ids[0]);
-                $this->SendDebug(__FUNCTION__, 'WebOAuth was successfully registered', 0);
+                $this->SendDebug(__FUNCTION__, 'WebOAuth was successfully unregistered', 0);
             }
         }
     }

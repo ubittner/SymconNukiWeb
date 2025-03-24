@@ -1,5 +1,6 @@
 <?php
 
+/** @noinspection PhpUnhandledExceptionInspection */
 /** @noinspection PhpUndefinedFieldInspection */
 /** @noinspection DuplicatedCode */
 /** @noinspection PhpUnused */
@@ -34,7 +35,7 @@ class NukiSplitterWebAPI extends IPSModuleStrict
         $this->RegisterPropertyBoolean('UseDeviceStateUpdates', true);
 
         //Attributes
-        $this->RegisterAttributeString('Token', '');
+        $this->RegisterAttributeString('Token', ''); /* This is the Refresh Token! */
         $this->RegisterAttributeString('WebhookURL', '');
         $this->RegisterAttributeString('WebhookSecret', '');
     }
@@ -55,9 +56,6 @@ class NukiSplitterWebAPI extends IPSModuleStrict
         parent::Destroy();
     }
 
-    /**
-     * @throws Exception
-     */
     public function ApplyChanges(): void
     {
         //Wait until IP-Symcon is started
@@ -77,7 +75,7 @@ class NukiSplitterWebAPI extends IPSModuleStrict
         //Register WebHook
         $this->RegisterWebHook('/hook/' . $this->oauthIdentifier);
 
-        //Check configuartion
+        //Check configuration
         if (!$this->ValidateConfiguration()) {
             return;
         }
@@ -86,9 +84,6 @@ class NukiSplitterWebAPI extends IPSModuleStrict
         $this->ManageWebhook();
     }
 
-    /**
-     * @throws Exception
-     */
     public function MessageSink($TimeStamp, $SenderID, $Message, $Data): void
     {
         $this->SendDebug('MessageSink', 'SenderID: ' . $SenderID . ', Message: ' . $Message, 0);
@@ -102,9 +97,6 @@ class NukiSplitterWebAPI extends IPSModuleStrict
         }
     }
 
-    /**
-     * @throws Exception
-     */
     public function GetConfigurationForm(): string
     {
         $data = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
@@ -116,9 +108,6 @@ class NukiSplitterWebAPI extends IPSModuleStrict
         return json_encode($data);
     }
 
-    /**
-     * @throws Exception
-     */
     public function ForwardData($JSONString): string
     {
         $this->SendDebug(__FUNCTION__, $JSONString, 0);
@@ -165,19 +154,13 @@ class NukiSplitterWebAPI extends IPSModuleStrict
         return $response;
     }
 
-    #################### Private
+    ########## Private
 
-    /**
-     * @throws Exception
-     */
     private function KernelReady(): void
     {
         $this->ApplyChanges();
     }
 
-    /**
-     * @throws Exception
-     */
     private function ValidateConfiguration(): bool
     {
         $result = true;
@@ -192,5 +175,19 @@ class NukiSplitterWebAPI extends IPSModuleStrict
         }
         $this->SetStatus($status);
         return $result;
+    }
+
+    /**
+     * Checks if a sting is json encoded.
+     *
+     * @param string $String
+     * @return bool
+     * false:   no json string
+     * true:    json string
+     */
+    private function CheckJson(string $String): bool
+    {
+        json_decode($String);
+        return json_last_error() === JSON_ERROR_NONE;
     }
 }
