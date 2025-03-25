@@ -10,6 +10,12 @@ class NukiConfiguratorWebAPI extends IPSModuleStrict
 {
     //Constants
     private const LIBRARY_GUID = '{8CDE2F20-ECBF-F12E-45AC-B8A7F36CBBFC}';
+    private const NUKI_WEB_SPLITTER_GUID = '{DA16C1AA-0AFE-65B6-1A0C-5761A08A0FF8}';
+    private const NUKI_WEB_SPLITTER_DATA_GUID = '{7F9C82E4-FF89-7856-2F13-E5A1992167D6}';
+    private const NUKI_WEB_SMARTLOCK_GUID = '{48C163A9-C871-88EB-2717-26A195E3E476}';
+    private const NUKI_WEB_BOX_GUID = '{5C79FC64-46D3-1EF9-3C72-3137275CB34C}';
+    private const NUKI_WEB_OPENER_GUID = '{41271F9F-1DB0-CB78-93BD-1361A6C5C058}';
+    private const NUKI_WEB_DOOR_GUID = '{8A30A6FD-A027-95E0-2DB2-F4B4F50E4EEA}';
 
     public function Create(): void
     {
@@ -17,7 +23,7 @@ class NukiConfiguratorWebAPI extends IPSModuleStrict
         parent::Create();
 
         //Connect to parent (Nuki Web Splitter)
-        $this->ConnectParent('{DA16C1AA-0AFE-65B6-1A0C-5761A08A0FF8}');
+        $this->ConnectParent(self::NUKI_WEB_SPLITTER_GUID);
     }
 
     public function ApplyChanges(): void
@@ -55,6 +61,28 @@ class NukiConfiguratorWebAPI extends IPSModuleStrict
         return json_encode($formData);
     }
 
+    /**
+     * Gets all connected instances.
+     *
+     * @return string
+     */
+    public function GetConnectedInstances(): string
+    {
+        $instanceTypes[] = ['type' => 'smartlock', 'guid' => self::NUKI_WEB_SMARTLOCK_GUID];
+        $instanceTypes[] = ['type' => 'box', 'guid' => self::NUKI_WEB_BOX_GUID];
+        $instanceTypes[] = ['type' => 'opener', 'guid' => self::NUKI_WEB_OPENER_GUID];
+        $instanceTypes[] = ['type' => 'door', 'guid' => self::NUKI_WEB_DOOR_GUID];
+        $connectedInstanceIDs = [];
+        foreach ($instanceTypes as $instanceType) {
+            foreach (IPS_GetInstanceListByModuleID($instanceType['guid']) as $instanceID) {
+                if (IPS_GetInstance($instanceID)['ConnectionID'] === IPS_GetInstance($this->InstanceID)['ConnectionID']) {
+                    $connectedInstanceIDs[$instanceType['type']][] = ['smartlockID' => IPS_GetProperty($instanceID, 'SmartLockID'), 'accountID' => IPS_GetProperty($instanceID, 'AccountID'), 'authID' => IPS_GetProperty($instanceID, 'AuthID'), 'objectID' => $instanceID];
+                }
+            }
+        }
+        return json_encode($connectedInstanceIDs);
+    }
+
     #################### Private
 
     private function KernelReady(): void
@@ -71,9 +99,21 @@ class NukiConfiguratorWebAPI extends IPSModuleStrict
         if (!$this->HasActiveParent()) {
             return $values;
         }
+
+        //Init found devices
+        $foundDevices['smartlock'] = [];
+        $foundDevices['box'] = [];
+        $foundDevices['opener'] = [];
+        $foundDevices['door'] = [];
+
+        //Get connected instances
+        $connectedInstanceIDs = json_decode($this->GetConnectedInstances(), true);
+
+        $serverConnection = true;
+
         $data = [];
         $buffer = [];
-        $data['DataID'] = '{7F9C82E4-FF89-7856-2F13-E5A1992167D6}';
+        $data['DataID'] = self::NUKI_WEB_SPLITTER_DATA_GUID;
         $buffer['Command'] = 'GetSmartLocks';
         $buffer['Params'] = '';
         $data['Buffer'] = $buffer;
@@ -99,8 +139,9 @@ class NukiConfiguratorWebAPI extends IPSModuleStrict
                         case 0: # Smart Lock 1,2 (1. and 2. Generation)
                         case 4: # Smart Lock 3/4 (3. und 4. Generation)
                         case 5: # Smart Lock 5   (5. Genration: Smart Lock Ultra)
+                            $foundDevices['smartlock'][] = ['smartlockID' => $smartLockID];
                             $instanceID = $this->GetDeviceInstances($smartLockID, 0);
-                            $values[] = [
+                            $value = [
                                 'SmartLockID'        => $smartLockID,
                                 'AccountID'          => $accountID,
                                 'AuthID'             => $authID,
@@ -119,11 +160,21 @@ class NukiConfiguratorWebAPI extends IPSModuleStrict
                                     ]
                                 ]
                             ];
+                            if (array_key_exists('smartlock', $connectedInstanceIDs)) {
+                                $connectedSmartLocks = $connectedInstanceIDs['smartlock'];
+                                foreach ($connectedSmartLocks as $connectedSmartLock) {
+                                    if ($connectedSmartLock['smartlockID'] == $smartLockID) {
+                                        $value['name'] = IPS_GetName($connectedSmartLock['objectID']);
+                                    }
+                                }
+                            }
+                            $values[] = $value;
                             break;
 
-                        case 1: # Box
+                        case 1: # Box, prepared, but not used at the moment
+                            $foundDevices['box'][] = ['smartlockID' => $smartLockID];
                             $instanceID = $this->GetDeviceInstances($smartLockID, 1);
-                            $values[] = [
+                            $value = [
                                 'SmartLockID'        => $smartLockID,
                                 'AccountID'          => $accountID,
                                 'AuthID'             => $authID,
@@ -144,11 +195,21 @@ class NukiConfiguratorWebAPI extends IPSModuleStrict
                                 ]
                                  */
                             ];
+                            if (array_key_exists('box', $connectedInstanceIDs)) {
+                                $connectedBoxes = $connectedInstanceIDs['box'];
+                                foreach ($connectedBoxes as $connectedBox) {
+                                    if ($connectedBox['smartlockID'] == $smartLockID) {
+                                        $value['name'] = IPS_GetName($connectedBox['objectID']);
+                                    }
+                                }
+                            }
+                            $values[] = $value;
                             break;
 
                         case 2: # Opener
+                            $foundDevices['opener'][] = ['smartlockID' => $smartLockID];
                             $instanceID = $this->GetDeviceInstances($smartLockID, 2);
-                            $values[] = [
+                            $value = [
                                 'SmartLockID'        => $smartLockID,
                                 'AccountID'          => $accountID,
                                 'AuthID'             => $authID,
@@ -167,11 +228,21 @@ class NukiConfiguratorWebAPI extends IPSModuleStrict
                                     ]
                                 ]
                             ];
+                            if (array_key_exists('opener', $connectedInstanceIDs)) {
+                                $connectedOpeners = $connectedInstanceIDs['opener'];
+                                foreach ($connectedOpeners as $connectedOpener) {
+                                    if ($connectedOpener['smartlockID'] == $smartLockID) {
+                                        $value['name'] = IPS_GetName($connectedOpener['objectID']);
+                                    }
+                                }
+                            }
+                            $values[] = $value;
                             break;
 
-                        case 3: # Door
+                        case 3: # Door, prepared, not used at the moment
+                            $foundDevices['door'][] = ['smartlockID' => $smartLockID];
                             $instanceID = $this->GetDeviceInstances($smartLockID, 3);
-                            $values[] = [
+                            $value = [
                                 'SmartLockID'        => $smartLockID,
                                 'AccountID'          => $accountID,
                                 'AuthID'             => $authID,
@@ -192,7 +263,59 @@ class NukiConfiguratorWebAPI extends IPSModuleStrict
                                 ]
                                  */
                             ];
+                            if (array_key_exists('door', $connectedInstanceIDs)) {
+                                $connectedDoors = $connectedInstanceIDs['door'];
+                                foreach ($connectedDoors as $connectedDoor) {
+                                    if ($connectedDoor['smartlockID'] == $smartLockID) {
+                                        $value['name'] = IPS_GetName($connectedDoor['objectID']);
+                                    }
+                                }
+                            }
+                            $values[] = $value;
                             break;
+                    }
+                }
+            }
+        } else {
+            $serverConnection = false;
+        }
+
+        //Check if connected "devices" still exist in the Nuki account of the user
+        $deviceTypes[] = ['type' => 'smartlock', 'firstCondition' => 'smartlockID'];
+        $deviceTypes[] = ['type' => 'box', 'firstCondition' => 'smartlockID'];
+        $deviceTypes[] = ['type' => 'opener', 'firstCondition' => 'smartlockID'];
+        $deviceTypes[] = ['type' => 'door', 'firstCondition' => 'smartlockID'];
+        foreach ($deviceTypes as $device) {
+            if (array_key_exists($device['type'], $connectedInstanceIDs)) {
+                $connectedDevices = $connectedInstanceIDs[$device['type']];
+                foreach ($connectedDevices as $connectedDevice) {
+                    if (array_key_exists('objectID', $connectedDevice)) {
+                        $objectID = $connectedDevice['objectID'];
+                        if (array_key_exists($device['firstCondition'], $connectedDevice)) {
+                            $connectedFirstCondition = $connectedDevice[$device['firstCondition']];
+                        }
+                        $match = false;
+                        foreach ($foundDevices[$device['type']] as $foundDevice) {
+                            $foundFirstCondition = $foundDevice[$device['firstCondition']];
+                            if (isset($connectedFirstCondition) && ($connectedFirstCondition == $foundFirstCondition)) {
+                                $match = true;
+                            }
+                        }
+                        if ($match) {
+                            continue;
+                        }
+                        $description = $this->Translate('Does not exist anymore!');
+                        if (!$serverConnection) {
+                            $description = $this->Translate('Server not available!');
+                        }
+                        $values[] = [
+                            'name'               => IPS_GetName($objectID),
+                            'SmartLockID'        => $connectedDevice['smartlockID'],
+                            'AccountID'          => $connectedDevice['accountID'],
+                            'AuthID'             => $connectedDevice['authID'],
+                            'ProductDesignation' => $description,
+                            'instanceID'         => $objectID
+                        ];
                     }
                 }
             }
@@ -207,19 +330,19 @@ class NukiConfiguratorWebAPI extends IPSModuleStrict
         $moduleID = '';
         switch ($DeviceType) {
             case 0: # Smart Lock
-                $moduleID = '{48C163A9-C871-88EB-2717-26A195E3E476}';
+                $moduleID = self::NUKI_WEB_SMARTLOCK_GUID;
                 break;
 
-            case 1: # Box
-                $moduleID = '{5C79FC64-46D3-1EF9-3C72-3137275CB34C}';
+            case 1: # Box, prepared, but not used at the moment
+                $moduleID = self::NUKI_WEB_BOX_GUID;
                 break;
 
             case 2: # Opener
-                $moduleID = '{41271F9F-1DB0-CB78-93BD-1361A6C5C058}';
+                $moduleID = self::NUKI_WEB_OPENER_GUID;
                 break;
 
-            case 3: # Door
-                $moduleID = '{8A30A6FD-A027-95E0-2DB2-F4B4F50E4EEA}';
+            case 3: # Door, prepared, but not used at the moment
+                $moduleID = self::NUKI_WEB_DOOR_GUID;
                 break;
         }
         $instanceIDs = IPS_GetInstanceListByModuleID($moduleID);

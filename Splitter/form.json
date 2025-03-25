@@ -31,11 +31,6 @@
     ],
     "actions": [
         {
-            "type": "Label",
-            "name": "Token",
-            "caption": "Token"
-        },
-        {
             "type": "Button",
             "caption": "Register",
             "onClick": "echo NUKISW_Register($id);"
@@ -49,13 +44,19 @@
             "caption": "Developer area",
             "items": [
                 {
-                    "type": "Button",
-                    "caption": "Show devices",
-                    "onClick": "$data=NUKISW_GetSmartLocks($id); print_r(json_decode($data, true));"
+                    "type": "Label",
+                    "name": "AccessToken",
+                    "caption": "Access Token:"
                 },
                 {
                     "type": "Label",
-                    "caption": " "
+                    "name": "TokenValidUntil",
+                    "caption": "Valid until:"
+                },
+                {
+                    "type": "Label",
+                    "name": "Token",
+                    "caption": "Refresh Token:"
                 },
                 {
                     "type": "Label",
@@ -66,6 +67,15 @@
                     "type": "Label",
                     "name": "WebhookSecret",
                     "caption": "Webhook Secret"
+                },
+                {
+                    "type": "Label",
+                    "caption": " "
+                },
+                {
+                    "type": "Button",
+                    "caption": "Show devices",
+                    "onClick": "$data=NUKISW_GetSmartLocks($id); print_r(json_decode($data, true));"
                 },
                 {
                     "type": "Button",

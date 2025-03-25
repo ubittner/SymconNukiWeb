@@ -99,6 +99,7 @@ trait Helper_webOAuth
                 }
                 if (property_exists($data, 'refresh_token')) {
                     $refreshToken = $data->refresh_token;
+                    $this->UpdateFormField('Token', 'caption', $refreshToken);
                 }
             }
         }
@@ -166,12 +167,14 @@ trait Helper_webOAuth
                         $Expires = time() + $data->expires_in;
                         $this->SetBuffer('AccessToken', json_encode(['Token' => $Token, 'Expires' => $Expires]));
                         $this->SendDebug(__FUNCTION__, 'CACHE! New Access Token is valid until: ' . date('d.m.y H:i:s', $Expires), 0);
+                        $this->UpdateFormField('AccessToken', 'caption', 'Access Token: ' . substr($data->access_token, 0, 16) . '...');
+                        $this->UpdateFormField('TokenValidUntil', 'caption', $this->Translate('Valid until') . ': ' . date('d.m.y H:i:s', $Expires));
                     }
                     //Update Refresh Token
                     if (isset($data->refresh_token)) {
                         $this->SendDebug(__FUNCTION__, "NEW! Let's save the updated Refresh Token permanently", 0);
                         $this->WriteAttributeString('Token', $data->refresh_token);
-                        $this->UpdateFormField('Token', 'caption', 'Token: ' . substr($data->refresh_token, 0, 16) . '...');
+                        $this->UpdateFormField('Token', 'caption', 'Refresh Token: ' . substr($data->refresh_token, 0, 16) . '...');
                     }
                 }
             }
