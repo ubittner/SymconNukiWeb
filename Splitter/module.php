@@ -102,9 +102,11 @@ class NukiSplitterWebAPI extends IPSModuleStrict
         $data = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
         $library = IPS_GetLibrary(self::LIBRARY_GUID);
         $data['elements'][2]['caption'] = 'ID: ' . $this->InstanceID . ', Version: ' . $library['Version'] . '-' . $library['Build'] . ', ' . date('d.m.Y', $library['Date']);
-        $data['actions'][0]['caption'] = $this->ReadAttributeString('Token') ? 'Token: ' . substr($this->ReadAttributeString('Token'), 0, 16) . ' ...' : 'Token: Not registered yet!';
-        $data['actions'][3]['items'][2]['caption'] = 'Webhook URL: ' . $this->ReadAttributeString('WebhookURL');
-        $data['actions'][3]['items'][3]['caption'] = 'Webhook Secret: ' . $this->ReadAttributeString('WebhookSecret');
+        $data['actions'][2]['items'][0]['caption'] = $this->GetAccessToken() ? 'Access Token: ' . substr($this->GetAccessToken(), 0, 16) . ' ...' : 'Access Token: ' . $this->Translate('not available') . '!';
+        $data['actions'][2]['items'][1]['caption'] = $this->Translate('Valid until') . ': ' . $this->GetAccessTokenExpires();
+        $data['actions'][2]['items'][2]['caption'] = $this->ReadAttributeString('Token') ? 'Refresh Token: ' . substr($this->ReadAttributeString('Token'), 0, 16) . ' ...' : 'Refresh Token: ' . $this->Translate('not available') . '!';
+        $data['actions'][2]['items'][3]['caption'] = 'Webhook URL: ' . $this->ReadAttributeString('WebhookURL');
+        $data['actions'][2]['items'][4]['caption'] = 'Webhook Secret: ' . $this->ReadAttributeString('WebhookSecret');
         return json_encode($data);
     }
 
@@ -175,6 +177,30 @@ class NukiSplitterWebAPI extends IPSModuleStrict
         }
         $this->SetStatus($status);
         return $result;
+    }
+
+    private function GetAccessToken(): string
+    {
+        $buffer = $this->GetBuffer('AccessToken');
+        if ($this->CheckJson($buffer)) {
+            $data = json_decode($buffer);
+            if (property_exists($data, 'Token')) {
+                return $data->Token;
+            }
+        }
+        return '';
+    }
+
+    private function GetAccessTokenExpires(): string
+    {
+        $buffer = $this->GetBuffer('AccessToken');
+        if ($this->CheckJson($buffer)) {
+            $data = json_decode($buffer);
+            if (property_exists($data, 'Expires')) {
+                return date('d.m.y H:i:s', $data->Expires);
+            }
+        }
+        return '-';
     }
 
     /**

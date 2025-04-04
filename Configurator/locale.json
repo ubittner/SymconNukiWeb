@@ -8,7 +8,10 @@
             "Device Type": "Gerätetyp",
             "Product Designation": "Produktbezeichnung",
             "Unknown": "Unbekannt",
-            "not found!": "nicht gefunden!"
+            "not found!": "nicht gefunden!",
+            "Does not exist anymore!": "Existiert nicht mehr!",
+            "Server not available!": "Server nicht erreichbar!",
+            "Unknown devices": "Unbekannte Geräte"
         }
     }
 }
