@@ -6,7 +6,7 @@
 
 declare(strict_types=1);
 
-class NukiSmartLockWebAPI extends IPSModuleStrict
+class NukiSmartLockWebAPI extends IPSModule
 {
     //Constants
     private const LIBRARY_GUID = '{8CDE2F20-ECBF-F12E-45AC-B8A7F36CBBFC}';
