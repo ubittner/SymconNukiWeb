@@ -1,5 +1,8 @@
 <?php
 
+/** @noinspection PhpUnhandledExceptionInspection */
+/** @noinspection PhpDocMissingThrowsInspection */
+/** @noinspection PhpMissingReturnTypeInspection */
 /** @noinspection PhpUndefinedFieldInspection */
 
 declare(strict_types=1);
@@ -22,7 +25,7 @@ trait Helper_webOAuth
         return 'https://' . $this->oauthServer . '/authorize/' . $this->oauthIdentifier . '?username=' . urlencode(IPS_GetLicensee());
     }
 
-    public function RequestStatus(): void
+    public function RequestStatus()
     {
         echo $this->FetchData('https://' . $this->oauthServer . '/forward');
     }
@@ -34,7 +37,7 @@ trait Helper_webOAuth
      *
      * @throws Exception
      */
-    protected function ProcessOAuthData(): void
+    protected function ProcessOAuthData()
     {
         //Let's assume requests via GET are for code exchange.
         if ($_SERVER['REQUEST_METHOD'] == 'GET') {
