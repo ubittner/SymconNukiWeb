@@ -118,7 +118,14 @@ class NukiConfiguratorWebAPI extends IPSModule
         $buffer['Params'] = '';
         $data['Buffer'] = $buffer;
         $data = json_encode($data);
-        $result = json_decode($this->SendDataToParent($data), true);
+        $result = @$this->SendDataToParent($data);
+        if (!is_string($result)) {
+            return $values;
+        }
+        if (!$this->CheckJson($result)) {
+            return $values;
+        }
+        $result = json_decode($result, true);
         if (array_key_exists('httpCode', $result)) {
             $httpCode = $result['httpCode'];
             $this->SendDebug(__FUNCTION__, 'Result http code: ' . $httpCode, 0);
@@ -355,5 +362,11 @@ class NukiConfiguratorWebAPI extends IPSModule
             }
         }
         return $instanceID;
+    }
+
+    private function CheckJson(string $String): bool
+    {
+        json_decode($String);
+        return json_last_error() === JSON_ERROR_NONE;
     }
 }
