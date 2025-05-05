@@ -118,7 +118,9 @@ trait Helper_webHook
      */
     private function PrepareNukiwebHook(): void
     {
-        if (!empty($this->ReadAttributeString('WebhookURL'))) {
+        $webhookURL = $this->ReadAttributeString('WebhookURL');
+        $this->SendDebug(__FUNCTION__, 'Saved Webhook URL: ' . $webhookURL, 0);
+        if (!empty($webhookURL)) {
             return;
         }
         // Get ipmagic address and add webhook credentials
@@ -228,6 +230,7 @@ trait Helper_webHook
             return;
         }
         $webhookURL = $this->ReadAttributeString('WebhookURL');
+        $this->SendDebug(__FUNCTION__, 'Actual Webhook URL: ' . $webhookURL, 0);
         if (!empty($webhookURL)) {
             //Identifiy webhook id
             $decentralWebhooks = json_decode($this->GetDecentralWebHooks(), true);
@@ -256,5 +259,11 @@ trait Helper_webHook
                 }
             }
         }
+        $this->WriteAttributeString('WebhookURL', '');
+        $this->UpdateFormField('WebhookURL', 'caption', 'Webhook URL: ');
+        $webhookURL = $this->ReadAttributeString('WebhookURL');
+        $this->SendDebug(__FUNCTION__, 'New Webhook URL: ' . $webhookURL, 0);
+        $this->WriteAttributeString('WebhookSecret', '');
+        $this->UpdateFormField('WebhookSecret', 'caption', 'Webhook Secret: ');
     }
 }
