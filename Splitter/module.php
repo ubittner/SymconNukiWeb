@@ -1,7 +1,6 @@
 <?php
 
 /** @noinspection PhpUnhandledExceptionInspection */
-/** @noinspection PhpUndefinedFieldInspection */
 /** @noinspection DuplicatedCode */
 /** @noinspection PhpUnused */
 
@@ -9,7 +8,7 @@ declare(strict_types=1);
 
 include_once __DIR__ . '/helper/autoload.php';
 
-class NukiSplitterWebAPI extends IPSModule
+class NukiSplitterWebAPI extends IPSModuleStrict
 {
     //Helper
     use NukiWebAPI;
@@ -17,12 +16,12 @@ class NukiSplitterWebAPI extends IPSModule
     use Helper_webOAuth;
 
     //Constants
-    private const LIBRARY_GUID = '{8CDE2F20-ECBF-F12E-45AC-B8A7F36CBBFC}';
-    private const MODULE_PREFIX = 'NUKISW';
-    private const CORE_CONNECT_GUID = '{9486D575-BE8C-4ED8-B5B5-20930E26DE6F}';
-    private const CORE_WEBHOOK_GUID = '{015A6EB8-D6E5-4B93-B496-0D3F77AE9FE1}';
-    private const CORE_WEBOAUTH_GUID = '{F99BF07D-CECA-438B-A497-E4B55F139D37}';
-    private const NUKI_DEVICE_DATA_GUID = '{6BD0D007-1A06-4F3F-1896-84E2BBFB4B09}';
+    private const string LIBRARY_GUID = '{8CDE2F20-ECBF-F12E-45AC-B8A7F36CBBFC}';
+    private const string MODULE_PREFIX = 'NUKISW';
+    private const string CORE_CONNECT_GUID = '{9486D575-BE8C-4ED8-B5B5-20930E26DE6F}';
+    private const string CORE_WEBHOOK_GUID = '{015A6EB8-D6E5-4B93-B496-0D3F77AE9FE1}';
+    private const string CORE_WEBOAUTH_GUID = '{F99BF07D-CECA-438B-A497-E4B55F139D37}';
+    private const string NUKI_DEVICE_DATA_GUID = '{6BD0D007-1A06-4F3F-1896-84E2BBFB4B09}';
 
     public function Create(): void
     {
@@ -42,11 +41,6 @@ class NukiSplitterWebAPI extends IPSModule
 
     public function Destroy(): void
     {
-        //Unregister WebHook
-        if (!IPS_InstanceExists($this->InstanceID)) {
-            $this->UnregisterWebhook('/hook/' . $this->oauthIdentifier);
-        }
-
         //Unregister WebOAuth
         if (!IPS_InstanceExists($this->InstanceID)) {
             $this->UnregisterWebOAuth($this->oauthIdentifier);
@@ -73,7 +67,8 @@ class NukiSplitterWebAPI extends IPSModule
         $this->RegisterWebOAuth($this->oauthIdentifier);
 
         //Register WebHook
-        $this->RegisterWebHook('/hook/' . $this->oauthIdentifier);
+        // old $this->RegisterWebHook('/hook/' . $this->oauthIdentifier);
+        $this->RegisterHook($this->oauthIdentifier);
 
         //Check configuration
         if (!$this->ValidateConfiguration()) {
@@ -169,6 +164,8 @@ class NukiSplitterWebAPI extends IPSModule
         $status = 102;
         if (empty($this->ReadAttributeString('Token'))) {
             $this->SendDebug(__FUNCTION__, 'Refresh Token is missing, please register first!', 0);
+            $status = 201;
+            $result = false;
         }
         if (!$this->ReadPropertyBoolean('Active')) {
             $this->SendDebug(__FUNCTION__, 'Instance is inactive!', 0);
@@ -213,7 +210,6 @@ class NukiSplitterWebAPI extends IPSModule
      */
     private function CheckJson(string $String): bool
     {
-        json_decode($String);
-        return json_last_error() === JSON_ERROR_NONE;
+        return json_validate($String);
     }
 }

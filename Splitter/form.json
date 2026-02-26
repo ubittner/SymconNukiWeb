@@ -138,6 +138,11 @@
             "code": 200,
             "icon": "inactive",
             "caption": "An error has occurred, for further information see messages, log file or debug"
+        },
+        {
+            "code": 201,
+            "icon": "error",
+            "caption": "Please start the registration!"
         }
     ]
 }

@@ -1,29 +1,26 @@
 <?php
 
-/** @noinspection PhpUndefinedFieldInspection */
+/** @noinspection PhpRedundantMethodOverrideInspection */
 /** @noinspection DuplicatedCode */
 /** @noinspection PhpUnused */
 
 declare(strict_types=1);
 
-class NukiConfiguratorWebAPI extends IPSModule
+class NukiConfiguratorWebAPI extends IPSModuleStrict
 {
     //Constants
-    private const LIBRARY_GUID = '{8CDE2F20-ECBF-F12E-45AC-B8A7F36CBBFC}';
-    private const NUKI_WEB_SPLITTER_GUID = '{DA16C1AA-0AFE-65B6-1A0C-5761A08A0FF8}';
-    private const NUKI_WEB_SPLITTER_DATA_GUID = '{7F9C82E4-FF89-7856-2F13-E5A1992167D6}';
-    private const NUKI_WEB_SMARTLOCK_GUID = '{48C163A9-C871-88EB-2717-26A195E3E476}';
-    private const NUKI_WEB_BOX_GUID = '{5C79FC64-46D3-1EF9-3C72-3137275CB34C}';
-    private const NUKI_WEB_OPENER_GUID = '{41271F9F-1DB0-CB78-93BD-1361A6C5C058}';
-    private const NUKI_WEB_DOOR_GUID = '{8A30A6FD-A027-95E0-2DB2-F4B4F50E4EEA}';
+    private const string LIBRARY_GUID = '{8CDE2F20-ECBF-F12E-45AC-B8A7F36CBBFC}';
+    private const string NUKI_WEB_SPLITTER_GUID = '{DA16C1AA-0AFE-65B6-1A0C-5761A08A0FF8}';
+    private const string NUKI_WEB_SPLITTER_DATA_GUID = '{7F9C82E4-FF89-7856-2F13-E5A1992167D6}';
+    private const string NUKI_WEB_SMARTLOCK_GUID = '{48C163A9-C871-88EB-2717-26A195E3E476}';
+    private const string NUKI_WEB_BOX_GUID = '{5C79FC64-46D3-1EF9-3C72-3137275CB34C}';
+    private const string NUKI_WEB_OPENER_GUID = '{41271F9F-1DB0-CB78-93BD-1361A6C5C058}';
+    private const string NUKI_WEB_DOOR_GUID = '{8A30A6FD-A027-95E0-2DB2-F4B4F50E4EEA}';
 
     public function Create(): void
     {
         //Never delete this line!
         parent::Create();
-
-        //Connect to parent (Nuki Web Splitter)
-        $this->ConnectParent(self::NUKI_WEB_SPLITTER_GUID);
     }
 
     public function ApplyChanges(): void
@@ -33,6 +30,17 @@ class NukiConfiguratorWebAPI extends IPSModule
 
         //Never delete this line!
         parent::ApplyChanges();
+    }
+
+    public function GetCompatibleParents(): string
+    {
+        //Connect to a new or existing Nuki Web Splitter instance
+        return json_encode([
+            'type'      => 'connect',
+            'moduleIDs' => [
+                self::NUKI_WEB_SPLITTER_GUID
+            ]
+        ]);
     }
 
     public function MessageSink($TimeStamp, $SenderID, $Message, $Data): void
@@ -366,7 +374,6 @@ class NukiConfiguratorWebAPI extends IPSModule
 
     private function CheckJson(string $String): bool
     {
-        json_decode($String);
-        return json_last_error() === JSON_ERROR_NONE;
+        return json_validate($String);
     }
 }

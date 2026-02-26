@@ -1,9 +1,9 @@
 <?php
 
-/** @noinspection PhpUnhandledExceptionInspection */
-/** @noinspection PhpDocMissingThrowsInspection */
-/** @noinspection PhpMissingReturnTypeInspection */
-/** @noinspection PhpUndefinedFieldInspection */
+//** @noinspection PhpUnhandledExceptionInspection */
+//** @noinspection PhpDocMissingThrowsInspection */
+//** @noinspection PhpMissingReturnTypeInspection */
+//** @noinspection PhpUndefinedFieldInspection */
 
 declare(strict_types=1);
 
@@ -25,7 +25,7 @@ trait Helper_webOAuth
         return 'https://' . $this->oauthServer . '/authorize/' . $this->oauthIdentifier . '?username=' . urlencode(IPS_GetLicensee());
     }
 
-    public function RequestStatus()
+    public function RequestStatus(): void
     {
         echo $this->FetchData('https://' . $this->oauthServer . '/forward');
     }
@@ -37,7 +37,7 @@ trait Helper_webOAuth
      *
      * @throws Exception
      */
-    protected function ProcessOAuthData()
+    protected function ProcessOAuthData(): void
     {
         //Let's assume requests via GET are for code exchange.
         if ($_SERVER['REQUEST_METHOD'] == 'GET') {
@@ -116,7 +116,7 @@ trait Helper_webOAuth
      * @param int $Expires
      * @return mixed
      */
-    private function FetchAccessToken(string $Token = '', int $Expires = 0): mixed
+    private function FetchAccessToken(string $Token = '', int $Expires = 0): string
     {
         //Exchange our Refresh Token for temporary Access Token
         if ($Token == '' && $Expires == 0) {
@@ -134,7 +134,8 @@ trait Helper_webOAuth
             //Check for an existing Refresh Token
             if (empty($this->ReadAttributeString('Token'))) {
                 //Abort, we have no Refresh Token yet, please register first
-                die();
+                return '';
+                //die();
             }
             //Get new tokens
             $options = [
