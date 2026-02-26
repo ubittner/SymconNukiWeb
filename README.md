@@ -1,12 +1,13 @@
 [![Image](imgs/NUKI_Logo.png)](https://nuki.io/de/)
 
-[![IP-Symcon is awesome!](https://img.shields.io/badge/IP--Symcon-7.0-blue.svg)](https://www.symcon.de)
-[![PHP is awesome!](https://img.shields.io/badge/php-8.2.5-777bb3.svg?logo=php&logoColor=white&labelColor=555555)](https://www.php.net)
+[![IP-Symcon is awesome!](https://img.shields.io/badge/IP--Symcon-9.0-blue.svg)](https://www.symcon.de)
+[![PHP is awesome!](https://img.shields.io/badge/php-8.5-777bb3.svg?logo=php&logoColor=white&labelColor=555555)](https://www.php.net)
 [![Check Style](https://github.com/ubittner/SymconNukiWeb/workflows/Check%20Style/badge.svg)](https://github.com/ubittner/SymconNukiWeb/actions)
 [![Run Tests](https://github.com/ubittner/SymconNukiWeb/workflows/Run%20Tests/badge.svg)](https://github.com/ubittner/SymconNukiWeb/actions)  
+[![Module Type](https://img.shields.io/badge/Type-IPSModuleStrict-red.svg)](https://www.symcon.de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/)
 [![Module Version](https://img.shields.io/badge/Module_Version-2.0-blue.svg)]()
-[![Module Build](https://img.shields.io/badge/Module_Build-10-blue.svg)]()
-[![Module Date](https://img.shields.io/badge/Module_Date-20250505_(05.05.2025)-blue.svg)]()  
+[![Module Build](https://img.shields.io/badge/Module_Build-11-blue.svg)]()
+[![Module Date](https://img.shields.io/badge/Module_Date-20260225_(25.02.2026)-blue.svg)]()  
 [![Version](https://img.shields.io/badge/Nuki_Web_API_Version-1.5.3-yellow.svg)]()  
 [![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
