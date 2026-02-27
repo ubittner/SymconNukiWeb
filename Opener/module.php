@@ -270,6 +270,10 @@ class NukiOpenerWebAPI extends IPSModuleStrict
         } else {
             $this->MaintainVariable('ActivityLog', $this->Translate('Activity log'), 3, '', 0, false);
         }
+
+        if ($this->HasActiveParent()) {
+            $this->UpdateData();
+        }
     }
 
     public function GetCompatibleParents(): string
