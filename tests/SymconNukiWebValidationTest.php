@@ -21,6 +21,11 @@ class SymconNukiWebValidationTest extends TestCaseSymconValidation
         $this->validateModule(__DIR__ . '/../Opener');
     }
 
+    public function testValidateSmartLockModule(): void
+    {
+        $this->validateModule(__DIR__ . '/../SmartLock');
+    }
+
     public function testValidateSplitterModule(): void
     {
         $this->validateModule(__DIR__ . '/../Splitter');

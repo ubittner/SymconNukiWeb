@@ -1,9 +1,9 @@
 <?php
 
-/** @noinspection PhpMissingReturnTypeInspection */
-/** @noinspection PhpUndefinedFieldInspection */
-/** @noinspection PhpUndefinedFunctionInspection */
-/** @noinspection PhpUnused */
+//** @noinspection PhpMissingReturnTypeInspection */
+//** @noinspection PhpUndefinedFieldInspection */
+//** @noinspection PhpUndefinedFunctionInspection */
+//** @noinspection PhpUnused */
 
 declare(strict_types=1);
 
@@ -16,7 +16,7 @@ trait Helper_webHook
      *
      * @throws Exception
      */
-    protected function ProcessHookData()
+    protected function ProcessHookData(): void
     {
         //Get incoming data from server
         $this->SendDebug(__FUNCTION__, 'Incoming data: ' . print_r($_SERVER, true), 0);
@@ -50,14 +50,12 @@ trait Helper_webHook
         $this->SendDataToChildren($forwardData);
     }
 
-    #################### Private
-
     /**
      * Registers a webhook to the WebHook Control.
      *
      * @param $WebHook
      */
-    private function RegisterWebHook($WebHook): void
+    protected function RegisterWebHook($WebHook): void
     {
         $ids = IPS_GetInstanceListByModuleID(self::CORE_WEBHOOK_GUID);
         if (count($ids) > 0) {
@@ -86,7 +84,7 @@ trait Helper_webHook
      *
      * @param $WebHook
      */
-    private function UnregisterWebHook($WebHook): void
+    protected function UnregisterWebHook($WebHook): void
     {
         $ids = IPS_GetInstanceListByModuleID(self::CORE_WEBHOOK_GUID);
         if (count($ids) > 0) {
@@ -110,6 +108,8 @@ trait Helper_webHook
             }
         }
     }
+
+    #################### Private
 
     /**
      * Prepares the webhook url, username and password for Nuki Web.

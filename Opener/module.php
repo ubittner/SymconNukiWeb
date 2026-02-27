@@ -1,16 +1,15 @@
 <?php
 
-/** @noinspection PhpUndefinedFieldInspection */
 /** @noinspection DuplicatedCode */
 /** @noinspection PhpUnused */
 
 declare(strict_types=1);
 
-class NukiOpenerWebAPI extends IPSModule
+class NukiOpenerWebAPI extends IPSModuleStrict
 {
     //Constants
-    private const LIBRARY_GUID = '{8CDE2F20-ECBF-F12E-45AC-B8A7F36CBBFC}';
-    private const MODULE_PREFIX = 'NUKIOW';
+    private const string LIBRARY_GUID = '{8CDE2F20-ECBF-F12E-45AC-B8A7F36CBBFC}';
+    private const string MODULE_PREFIX = 'NUKIOW';
 
     public function Create(): void
     {
@@ -223,11 +222,6 @@ class NukiOpenerWebAPI extends IPSModule
         ##### Timer
 
         $this->RegisterTimer('Update', 0, self::MODULE_PREFIX . '_UpdateData(' . $this->InstanceID . ');');
-
-        ##### Splitter
-
-        //Connect to parent (Nuki Web Splitter)
-        $this->ConnectParent('{DA16C1AA-0AFE-65B6-1A0C-5761A08A0FF8}');
     }
 
     public function Destroy(): void
@@ -253,6 +247,9 @@ class NukiOpenerWebAPI extends IPSModule
         //Wait until IP-Symcon is started
         $this->RegisterMessage(0, IPS_KERNELSTARTED);
 
+        //Register FM Connect message
+        $this->RegisterMessage($this->InstanceID, FM_CONNECT);
+
         //Never delete this line!
         parent::ApplyChanges();
 
@@ -273,8 +270,17 @@ class NukiOpenerWebAPI extends IPSModule
         } else {
             $this->MaintainVariable('ActivityLog', $this->Translate('Activity log'), 3, '', 0, false);
         }
+    }
 
-        $this->UpdateData();
+    public function GetCompatibleParents(): string
+    {
+        //Connect to a new or existing Nuki Web Splitter instance
+        return json_encode([
+            'type'      => 'connect',
+            'moduleIDs' => [
+                '{DA16C1AA-0AFE-65B6-1A0C-5761A08A0FF8}'
+            ]
+        ]);
     }
 
     /**
@@ -288,8 +294,15 @@ class NukiOpenerWebAPI extends IPSModule
                 $this->SendDebug(__FUNCTION__, 'Data[' . $key . '] = ' . json_encode($value), 0);
             }
         }
-        if ($Message == IPS_KERNELSTARTED) {
-            $this->KernelReady();
+        switch ($Message) {
+            case IPS_KERNELSTARTED:
+                $this->KernelReady();
+                break;
+
+            case FM_CONNECT:
+                $this->UpdateData();
+                break;
+
         }
     }
 

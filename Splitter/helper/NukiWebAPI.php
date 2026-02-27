@@ -204,7 +204,7 @@ trait NukiWebAPI
             $error_msg = curl_error($ch);
             $this->SendDebug(__FUNCTION__, 'An error has occurred: ' . json_encode($error_msg), 0);
         }
-        curl_close($ch);
+        // ToDo: Delete curl_close($ch);
         $result = ['httpCode' => $httpCode, 'body' => $body];
         $this->SendDebug(__FUNCTION__, 'Result: ' . json_encode($result), 0);
         return json_encode($result);

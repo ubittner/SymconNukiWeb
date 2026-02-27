@@ -7,6 +7,7 @@
         <whitelist processUncoveredFilesFromWhitelist="true">
             <directory suffix=".php">../Configurator</directory>
             <directory suffix=".php">../Opener</directory>
+            <directory suffix=".php">../SmartLock</directory>
             <directory suffix=".php">../Splitter</directory>
         </whitelist>
     </filter>
