@@ -6,8 +6,8 @@
 [![Run Tests](https://github.com/ubittner/SymconNukiWeb/workflows/Run%20Tests/badge.svg)](https://github.com/ubittner/SymconNukiWeb/actions)  
 [![Module Type](https://img.shields.io/badge/Type-IPSModuleStrict-red.svg)](https://www.symcon.de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/)
 [![Module Version](https://img.shields.io/badge/Module_Version-2.0-blue.svg)]()
-[![Module Build](https://img.shields.io/badge/Module_Build-11-blue.svg)]()
-[![Module Date](https://img.shields.io/badge/Module_Date-20260227_(27.02.2026)-blue.svg)]()  
+[![Module Build](https://img.shields.io/badge/Module_Build-12-blue.svg)]()
+[![Module Date](https://img.shields.io/badge/Module_Date-20260228_(28.02.2026)-blue.svg)]()  
 [![Version](https://img.shields.io/badge/Nuki_Web_API_Version-1.5.3-yellow.svg)]()  
 [![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
