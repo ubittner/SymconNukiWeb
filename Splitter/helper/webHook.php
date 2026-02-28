@@ -1,9 +1,6 @@
 <?php
 
-//** @noinspection PhpMissingReturnTypeInspection */
-//** @noinspection PhpUndefinedFieldInspection */
-//** @noinspection PhpUndefinedFunctionInspection */
-//** @noinspection PhpUnused */
+/** @noinspection PhpUndefinedFunctionInspection */
 
 declare(strict_types=1);
 
@@ -12,13 +9,13 @@ trait Helper_webHook
     #################### Protected
 
     /**
-     * This function will be called by the hook control and data will be forwarded to the devices.
+     * This function will be called by the hook control, and data will be forwarded to the devices.
      *
      * @throws Exception
      */
     protected function ProcessHookData(): void
     {
-        //Get incoming data from server
+        //Get incoming data from the server
         $this->SendDebug(__FUNCTION__, 'Incoming data: ' . print_r($_SERVER, true), 0);
         //Get content
         $data = file_get_contents('php://input');
@@ -50,73 +47,14 @@ trait Helper_webHook
         $this->SendDataToChildren($forwardData);
     }
 
-    /**
-     * Registers a webhook to the WebHook Control.
-     *
-     * @param $WebHook
-     */
-    protected function RegisterWebHook($WebHook): void
-    {
-        $ids = IPS_GetInstanceListByModuleID(self::CORE_WEBHOOK_GUID);
-        if (count($ids) > 0) {
-            $hooks = json_decode(IPS_GetProperty($ids[0], 'Hooks'), true);
-            $found = false;
-            foreach ($hooks as $index => $hook) {
-                if ($hook['Hook'] == $WebHook) {
-                    if ($hook['TargetID'] == $this->InstanceID) {
-                        return;
-                    }
-                    $hooks[$index]['TargetID'] = $this->InstanceID;
-                    $found = true;
-                }
-            }
-            if (!$found) {
-                $hooks[] = ['Hook' => $WebHook, 'TargetID' => $this->InstanceID];
-                $this->SendDebug(__FUNCTION__, 'WebHook was successfully registered.', 0);
-            }
-            IPS_SetProperty($ids[0], 'Hooks', json_encode($hooks));
-            IPS_ApplyChanges($ids[0]);
-        }
-    }
-
-    /**
-     * Unregisters a webhook from the WebHook Control.
-     *
-     * @param $WebHook
-     */
-    protected function UnregisterWebHook($WebHook): void
-    {
-        $ids = IPS_GetInstanceListByModuleID(self::CORE_WEBHOOK_GUID);
-        if (count($ids) > 0) {
-            $hooks = json_decode(IPS_GetProperty($ids[0], 'Hooks'), true);
-            $found = false;
-            $index = null;
-            foreach ($hooks as $key => $hook) {
-                if ($hook['Hook'] == $WebHook) {
-                    if ($hook['TargetID'] == $this->InstanceID) {
-                        $found = true;
-                        $index = $key;
-                        break;
-                    }
-                }
-            }
-            if ($found === true && !is_null($index)) {
-                array_splice($hooks, $index, 1);
-                IPS_SetProperty($ids[0], 'Hooks', json_encode($hooks));
-                IPS_ApplyChanges($ids[0]);
-                $this->SendDebug(__FUNCTION__, 'WebHook was successfully unregistered.', 0);
-            }
-        }
-    }
-
     #################### Private
 
     /**
-     * Prepares the webhook url, username and password for Nuki Web.
+     * Prepares the webhook url, username, and password for Nuki Web.
      *
      * @throws Exception
      */
-    private function PrepareNukiwebHook(): void
+    private function PrepareNukiWebHook(): void
     {
         $webhookURL = $this->ReadAttributeString('WebhookURL');
         $this->SendDebug(__FUNCTION__, 'Saved Webhook URL: ' . $webhookURL, 0);
@@ -148,7 +86,7 @@ trait Helper_webHook
     }
 
     /**
-     * Creates the decental webhook on Nuki Web.
+     * Creates the decentral webhook on Nuki Web.
      *
      * @throws Exception
      */
@@ -168,7 +106,7 @@ trait Helper_webHook
                     $existing = false;
                     $webhookURL = $this->ReadAttributeString('WebhookURL');
                     if (!empty($webhookURL)) {
-                        //Identifiy webhook id
+                        //Identify webhook id
                         $decentralWebhooks = json_decode($this->GetDecentralWebHooks(), true);
                         if (array_key_exists('body', $decentralWebhooks)) {
                             $webhooks = json_decode($decentralWebhooks['body'], true);
@@ -232,7 +170,7 @@ trait Helper_webHook
         $webhookURL = $this->ReadAttributeString('WebhookURL');
         $this->SendDebug(__FUNCTION__, 'Actual Webhook URL: ' . $webhookURL, 0);
         if (!empty($webhookURL)) {
-            //Identifiy webhook id
+            //Identify webhook id
             $decentralWebhooks = json_decode($this->GetDecentralWebHooks(), true);
             if (array_key_exists('body', $decentralWebhooks)) {
                 $webhooks = json_decode($decentralWebhooks['body'], true);
