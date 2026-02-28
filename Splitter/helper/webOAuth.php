@@ -1,10 +1,5 @@
 <?php
 
-//** @noinspection PhpUnhandledExceptionInspection */
-//** @noinspection PhpDocMissingThrowsInspection */
-//** @noinspection PhpMissingReturnTypeInspection */
-//** @noinspection PhpUndefinedFieldInspection */
-
 declare(strict_types=1);
 
 trait Helper_webOAuth
@@ -21,7 +16,7 @@ trait Helper_webOAuth
      */
     public function Register(): string
     {
-        //Return everything which will open the browser
+        //Return everything that will open the browser
         return 'https://' . $this->oauthServer . '/authorize/' . $this->oauthIdentifier . '?username=' . urlencode(IPS_GetLicensee());
     }
 
@@ -79,7 +74,7 @@ trait Helper_webOAuth
         ];
         $context = stream_context_create($options);
         $result = @file_get_contents('https://' . $this->oauthServer . '/access_token/' . $this->oauthIdentifier, false, $context);
-        //Check result, must be a json encoded string
+        //Check result, must be a JSON encoded string
         if ($result === false) {
             $error = error_get_last();
             $this->SendDebug(__FUNCTION__, 'HTTP request failed. Error: ' . $error['message'], 0);
@@ -88,7 +83,7 @@ trait Helper_webOAuth
         }
         if (is_string($result)) {
             if ($this->CheckJson($result)) {
-                //We got a json string, so lets decode it
+                //We got a JSON string, so let's decode it
                 $this->SendDebug(__FUNCTION__, $result, 0);
                 $data = json_decode($result);
                 if (!isset($data->token_type) || $data->token_type != 'bearer') {
@@ -96,7 +91,7 @@ trait Helper_webOAuth
                     $this->LogMessage('ID: ' . $this->InstanceID . ', Fetch refresh token. Abort, Bearer Token expected!', KL_WARNING);
                     die();
                 }
-                //Save temporary access token
+                //Save a temporary access token
                 if (property_exists($data, 'access_token')) {
                     $this->FetchAccessToken($data->access_token, time() + $data->expires_in);
                 }
@@ -118,9 +113,9 @@ trait Helper_webOAuth
      */
     private function FetchAccessToken(string $Token = '', int $Expires = 0): string
     {
-        //Exchange our Refresh Token for temporary Access Token
+        //Exchange our Refresh Token for a temporary Access Token
         if ($Token == '' && $Expires == 0) {
-            //Check if we already have a valid Access Token in cache
+            //Check if we already have a valid Access Token in the cache
             $data = $this->GetBuffer('AccessToken');
             if ($data != '') {
                 $data = json_decode($data);
@@ -129,7 +124,7 @@ trait Helper_webOAuth
                     return $data->Token;
                 }
             }
-            //If we slipped here we need to fetch the new Access Token via the Refresh Token
+            //If we slipped here, we need to fetch the new Access Token via the Refresh Token
             $this->SendDebug(__FUNCTION__, 'Use Refresh Token to get a new Access Token!', 0);
             //Check for an existing Refresh Token
             if (empty($this->ReadAttributeString('Token'))) {
@@ -147,7 +142,7 @@ trait Helper_webOAuth
             ];
             $context = stream_context_create($options);
             $result = @file_get_contents('https://' . $this->oauthServer . '/access_token/' . $this->oauthIdentifier, false, $context);
-            //Check result, must be a json encoded string
+            //Check result, must be a JSON encoded string
             if ($result === false) {
                 $error = error_get_last();
                 $this->SendDebug(__FUNCTION__, 'HTTP request failed. Error: ' . $error['message'], 0);
@@ -156,7 +151,7 @@ trait Helper_webOAuth
             }
             if (is_string($result)) {
                 if ($this->CheckJson($result)) {
-                    //We got a json string, so lets decode it
+                    //We got a JSON string, so let's decode it
                     $this->SendDebug(__FUNCTION__, $result, 0);
                     $data = json_decode($result);
                     if (!isset($data->token_type) || $data->token_type != 'bearer') {

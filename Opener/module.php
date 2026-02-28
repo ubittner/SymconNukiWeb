@@ -98,7 +98,7 @@ class NukiOpenerWebAPI extends IPSModuleStrict
         $this->RegisterVariableInteger('RingToOpenTimeout', $this->Translate('Ring to Open timeout'), $profile, 210);
         $this->EnableAction('RingToOpenTimeout');
 
-        //One time access
+        //One-time access
         $id = @$this->GetIDForIdent('OneTimeAccess');
         $this->RegisterVariableBoolean('OneTimeAccess', $this->Translate('One time access'), '~Switch', 220);
         $this->EnableAction('OneTimeAccess');

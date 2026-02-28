@@ -67,7 +67,6 @@ class NukiSplitterWebAPI extends IPSModuleStrict
         $this->RegisterWebOAuth($this->oauthIdentifier);
 
         //Register WebHook
-        // old $this->RegisterWebHook('/hook/' . $this->oauthIdentifier);
         $this->RegisterHook($this->oauthIdentifier);
 
         //Check configuration
@@ -201,12 +200,12 @@ class NukiSplitterWebAPI extends IPSModuleStrict
     }
 
     /**
-     * Checks if a sting is json encoded.
+     * Checks if a sting is JSON encoded.
      *
      * @param string $String
      * @return bool
-     * false:   no json string
-     * true:    json string
+     * false:   no JSON string
+     * true:    JSON string
      */
     private function CheckJson(string $String): bool
     {
